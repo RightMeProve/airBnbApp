@@ -19,7 +19,7 @@ public class Room {
     // Auto-increment primary key (Room ID)
     private Long id;
 
-    @ManyToOne  // Many rooms can belong to one hotel
+    @ManyToOne(fetch = FetchType.LAZY)  // Many rooms can belong to one hotel
     @JoinColumn(name = "hotel_id", nullable = false)
     // Foreign key column "hotel_id" links Room -> Hotel
     private Hotel hotel;

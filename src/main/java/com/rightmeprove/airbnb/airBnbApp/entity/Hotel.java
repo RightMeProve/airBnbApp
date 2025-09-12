@@ -54,15 +54,21 @@ public class Hotel {
     @Column(nullable = false)
     private Boolean active; // Whether the hotel is currently active/listed
 
-    @OneToMany(mappedBy = "hotel", fetch = FetchType.LAZY)
-    /*
-     * One Hotel → Many Rooms.
-     * `mappedBy = "hotel"` → the "hotel" field in Room owns the relationship.
-     * This side is inverse; no join column is created here.
-     *
-     * FetchType.LAZY → Rooms are loaded only when accessed (efficient).
-     * If EAGER was used, all rooms would load whenever a Hotel is fetched,
-     * which can cause performance issues with large datasets.
-     */
-    private List<Room> rooms;
+    // should i remove this???
+//    @OneToMany(mappedBy = "hotel", fetch = FetchType.LAZY)
+//    /*
+//     * One Hotel → Many Rooms.
+//     * `mappedBy = "hotel"` → the "hotel" field in Room owns the relationship.
+//     * This side is inverse; no join column is created here.
+//     *
+//     * FetchType.LAZY → Rooms are loaded only when accessed (efficient).
+//     * If EAGER was used, all rooms would load whenever a Hotel is fetched,
+//     * which can cause performance issues with large datasets.
+//     */
+//    private List<Room> rooms;
+
+    @ManyToOne
+    private User owner;
+
+
 }

@@ -55,4 +55,9 @@ public class HotelServiceImpl implements HotelService {
         // TODO: delete the future inventories for this hotel
 //        return true;
     }
+
+    @Override
+    public void activateHotel(Long id) {
+
+    }
 }

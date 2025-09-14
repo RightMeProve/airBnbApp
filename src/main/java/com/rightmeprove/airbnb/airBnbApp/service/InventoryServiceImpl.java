@@ -3,6 +3,7 @@ package com.rightmeprove.airbnb.airBnbApp.service;
 import com.rightmeprove.airbnb.airBnbApp.entity.Inventory;
 import com.rightmeprove.airbnb.airBnbApp.entity.Room;
 import com.rightmeprove.airbnb.airBnbApp.repository.InventoryRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ public class InventoryServiceImpl implements InventoryService {
     private final InventoryRepository inventoryRepository;
 
     @Override
+    @Transactional
     public void initializeRoomForAYear(Room room) {
         LocalDate today = LocalDate.now();
         LocalDate endDate = today.plusYears(1);
@@ -38,8 +40,9 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public void deleteFutureInventories(Room room) {
+    @Transactional
+    public void deleteAllInventories(Room room) {
         LocalDate today = LocalDate.now();
-        inventoryRepository.deleteByDateAfterAndRoom(today,room);
+        inventoryRepository.deleteByRoom(room);
     }
 }

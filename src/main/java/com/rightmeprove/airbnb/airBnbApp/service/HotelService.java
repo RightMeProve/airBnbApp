@@ -2,6 +2,8 @@ package com.rightmeprove.airbnb.airBnbApp.service;
 
 import com.rightmeprove.airbnb.airBnbApp.dto.HotelDto;
 
+import java.util.List;
+
 public interface HotelService {
 
     HotelDto createNewHotel(HotelDto hotelDto);
@@ -12,7 +14,7 @@ public interface HotelService {
 
     void deleteHotelById(Long id);
 
-    void activateHotel(Long id);
+    void activateHotel(Long hotelId);
 
-
+    List<HotelDto> getAllHotels();
 }

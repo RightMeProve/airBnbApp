@@ -1,8 +1,7 @@
 package com.rightmeprove.airbnb.airBnbApp.entity;
 
 import jakarta.persistence.*;          // JPA annotations
-import lombok.Getter;                 // Lombok auto-generates getters
-import lombok.Setter;                 // Lombok auto-generates setters
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp; // Auto-set creation timestamp
 import org.hibernate.annotations.UpdateTimestamp;   // Auto-update timestamp
 
@@ -24,6 +23,9 @@ import java.time.LocalDateTime;       // For timestamps
          * Prevents duplicate inventory records for the same room on the same date.
          */
 )
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Inventory {
 
     @Id
@@ -66,7 +68,7 @@ public class Inventory {
 
     @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
     // How many rooms already booked for this date (default = 0)
-    private Integer bookedCount;
+    private int bookedCount;
 
     @Column(nullable = false)
     // Total rooms available for booking on this date

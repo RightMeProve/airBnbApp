@@ -1,7 +1,7 @@
 package com.rightmeprove.airbnb.airBnbApp.service;
 
 import com.rightmeprove.airbnb.airBnbApp.dto.HotelDto;
-import com.rightmeprove.airbnb.airBnbApp.dto.HotelSearchRequest;
+import com.rightmeprove.airbnb.airBnbApp.dto.HotelSearchRequestDto;
 import com.rightmeprove.airbnb.airBnbApp.entity.Hotel;
 import com.rightmeprove.airbnb.airBnbApp.entity.Inventory;
 import com.rightmeprove.airbnb.airBnbApp.entity.Room;
@@ -20,7 +20,21 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
 @Service
-@RequiredArgsConstructor // why only this ? and Not NoArgs Constructor? or what if we direct put Data
+@RequiredArgsConstructor
+/*
+ * Why @RequiredArgsConstructor?
+ * - Generates a constructor with all final fields (inventoryRepository, modelMapper).
+ * - Spring uses this constructor for dependency injection.
+ *
+ * Why not @NoArgsConstructor?
+ * - That would create an empty constructor with no params.
+ * - Spring cannot inject final fields with it → dependencies would remain null.
+ *
+ * Why not @Data?
+ * - @Data = getters, setters, toString, equals, hashCode, and RequiredArgsConstructor.
+ * - Services don’t need setters or equals/hashCode (unlike entities/DTOs).
+ * - Cleaner to only use @RequiredArgsConstructor here.
+ */
 @Slf4j
 public class InventoryServiceImpl implements InventoryService {
 
@@ -32,17 +46,19 @@ public class InventoryServiceImpl implements InventoryService {
     public void initializeRoomForAYear(Room room) {
         LocalDate today = LocalDate.now();
         LocalDate endDate = today.plusYears(1);
-        for(; !today.isAfter(endDate);today = today.plusDays(1))
-        {
+
+        // Loop through 365+ days and create inventory records for each day
+        for (; !today.isAfter(endDate); today = today.plusDays(1)) {
             Inventory inventory = Inventory.builder()
-                    .hotel(room.getHotel())
-                    .room(room)
-                    .city(room.getHotel().getCity())
-                    .date(today)
-                    .price(room.getBasePrice())
-                    .surgeFactor(BigDecimal.ONE)
-                    .totalCount(room.getTotalCount())
-                    .closed(false)
+                    .hotel(room.getHotel())               // link to hotel
+                    .room(room)                           // link to room
+                    .city(room.getHotel().getCity())      // duplicate city for faster search
+                    .date(today)                          // inventory date
+                    .reservedCount(0)                     // default: no rooms reserved
+                    .price(room.getBasePrice())           // base price for the room
+                    .surgeFactor(BigDecimal.ONE)          // default = no surge
+                    .totalCount(room.getTotalCount())     // number of rooms available
+                    .closed(false)                        // default = open
                     .build();
             inventoryRepository.save(inventory);
         }
@@ -51,19 +67,40 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @Transactional
     public void deleteAllInventories(Room room) {
-        LocalDate today = LocalDate.now();
-        inventoryRepository.deleteByRoom(room);
+        log.info("Deleting the inventories of room with ID: {}", room.getId());
+        inventoryRepository.deleteByRoom(room); // bulk delete
     }
 
     @Override
-    public Page<HotelDto> searchHotels(HotelSearchRequest hotelSearchRequest) {
-        Pageable pageable = PageRequest.of(hotelSearchRequest.getPage(),hotelSearchRequest.getSize());
-        long dateCount =
-                ChronoUnit.DAYS.between(hotelSearchRequest.getStartDate(),hotelSearchRequest.getEndDate()) + 1;
-        Page<Hotel> hotelPage = inventoryRepository.findHotelsWithAvailableInventory(hotelSearchRequest.getCity(),
-                hotelSearchRequest.getStartDate(),hotelSearchRequest.getEndDate(),hotelSearchRequest.getRoomsCount(),
-                dateCount,pageable);
+    public Page<HotelDto> searchHotels(HotelSearchRequestDto hotelSearchRequestDto) {
+        log.info("Searching hotels for {} city, from {} to {} ",
+                hotelSearchRequestDto.getCity(),
+                hotelSearchRequestDto.getStartDate(),
+                hotelSearchRequestDto.getEndDate());
 
-        return hotelPage.map((element) -> modelMapper.map(element,HotelDto.class));
+        // Pagination (page number + size from request)
+        Pageable pageable = PageRequest.of(
+                hotelSearchRequestDto.getPage(),
+                hotelSearchRequestDto.getSize()
+        );
+
+        // Count how many days user wants to stay (inclusive)
+        long dateCount = ChronoUnit.DAYS.between(
+                hotelSearchRequestDto.getStartDate(),
+                hotelSearchRequestDto.getEndDate()
+        ) + 1;
+
+        // Query DB for hotels with inventory available for all requested days
+        Page<Hotel> hotelPage = inventoryRepository.findHotelsWithAvailableInventory(
+                hotelSearchRequestDto.getCity(),
+                hotelSearchRequestDto.getStartDate(),
+                hotelSearchRequestDto.getEndDate(),
+                hotelSearchRequestDto.getRoomsCount(),
+                dateCount,
+                pageable
+        );
+
+        // Convert each Hotel → HotelDto for API response
+        return hotelPage.map(element -> modelMapper.map(element, HotelDto.class));
     }
 }

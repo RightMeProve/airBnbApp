@@ -1,55 +1,84 @@
-# 🏨 AirBnB (Spring Boot + Postgres)
+# 🏨 AirBnB Backend (Spring Boot + PostgreSQL)
 
-A backend system that mimics the core functionality of Airbnb: managing
-hotels, rooms, bookings, guests, inventory, and payments.
+A backend system that mimics the core functionality of Airbnb: managing hotels, rooms, bookings, guests, inventory, and payments.
 
-------------------------------------------------------------------------
+---
 
-## ⚡ Features (So far)
+## ⚡ Features (Implemented)
 
-- Hotel & Room management
-- Guest management
-- User authentication with roles (HotelManager, Guest)
-- Booking system with Guests + Payments
-- Inventory tracking with surge pricing
-- Payment integration (Transaction ID & Status)
-- Enum-based Role & Status management
+- **Hotel & Room management**
+- **Guest management**
+- **User authentication with roles** (`HotelManager`, `Guest`)
+- **Booking system** with guests and payments
+- **Inventory tracking** with surge pricing
+- **Payment integration** (Transaction ID & Status)
+- **Enum-based Role & Status management**
 
-------------------------------------------------------------------------
+---
 
 ## 📐 System Design
 
-### DFD (Data Flow Diagram)
+### Data Flow Diagram (DFD)
 ![DFD](./DFD_airBnb.png)
 
-### DFD (DBeaver View)
+### Database View (DBeaver)
 ![DFD DBeaver](./DFD_airBnb_DBeaverView.png)
 
 ### High-Level Architecture
 ![System Design](./Design_airBnb.png)
 
-------------------------------------------------------------------------
+---
 
 ## 🛠 Tech Stack
 
-- **Spring Boot**
-- **JPA/Hibernate**
-- **PostgreSQL**
-- **Lombok**
-- **Maven**
+- **Backend:** Spring Boot
+- **ORM:** JPA / Hibernate
+- **Database:** PostgreSQL
+- **Utilities:** Lombok
+- **Build Tool:** Maven
 
-------------------------------------------------------------------------
+---
 
-## ⚙️ Setup
+## 🗂 Controllers & Endpoints
 
-1. **Clone the repo**
+### Hotel Management (Admin)
+`/admin/hotels`
+- `POST /` → Create new hotel
+- `GET /` → Get all hotels
+- `GET /{hotelId}` → Get hotel by ID
+- `PUT /{hotelId}` → Update hotel
+- `DELETE /{hotelId}` → Delete hotel
+- `PATCH /{hotelId}/activate` → Activate hotel
+
+### Room Management (Admin)
+`/admin/hotels/{hotelId}/rooms`
+- `POST /` → Create new room
+- `GET /` → Get all rooms in a hotel
+- `GET /{roomId}` → Get room by ID
+- `DELETE /{roomId}` → Delete room
+
+### Hotel Browsing
+`/hotels`
+- `GET /search` → Search hotels with filters
+- `GET /{hotelId}/info` → Get detailed hotel info
+
+### Booking
+`/bookings`
+- `POST /init` → Initialise a new booking
+- `POST /{bookingId}/addGuests` → Add guests to a booking
+
+---
+
+## ⚙️ Setup Guide
+
+1. **Clone the repository**
    ```bash
    git clone https://github.com/RightMeProve/airBnbApp.git
    cd airBnbApp
    ```
 
 2. **Configure Database**  
-   In `src/main/resources/application.properties`:
+   Edit `src/main/resources/application.properties`:
    ```properties
    spring.datasource.url=jdbc:postgresql://localhost:5432/airbnb
    spring.datasource.username=postgres
@@ -63,21 +92,22 @@ hotels, rooms, bookings, guests, inventory, and payments.
    ./mvnw spring-boot:run
    ```
 
-------------------------------------------------------------------------
+---
 
 ## 📂 Project Roadmap
 
-1. ✅ Setup project & dependencies
-2. ✅ Configure DB connection
+1. ✅ Project setup & dependencies
+2. ✅ Configure database connection
 3. ✅ Define entities & relationships
 4. ✅ Implement repositories & services
-5. ⬜ Add REST controllers & APIs
+5. ✅ Add REST controllers & APIs
 6. ⬜ Integrate authentication & JWT
 7. ⬜ Implement business rules (surge pricing, inventory reset job)
-8. ⬜ Deploy locally → then containerize with Docker
+8. ⬜ Deploy locally → containerize with Docker
 
-------------------------------------------------------------------------
+---
 
 ## 👨‍💻 Author
 
-- **Satyam Kumar** ([@RightMeProve](https://github.com/RightMeProve))
+- **Satyam Kumar** [@RightMeProve](https://github.com/RightMeProve)
+

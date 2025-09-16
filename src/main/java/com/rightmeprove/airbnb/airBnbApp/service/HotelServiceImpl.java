@@ -1,6 +1,7 @@
 package com.rightmeprove.airbnb.airBnbApp.service;
 
 import com.rightmeprove.airbnb.airBnbApp.dto.HotelDto;
+import com.rightmeprove.airbnb.airBnbApp.dto.HotelInfoDto;
 import com.rightmeprove.airbnb.airBnbApp.dto.RoomDto;
 import com.rightmeprove.airbnb.airBnbApp.entity.Hotel;
 import com.rightmeprove.airbnb.airBnbApp.entity.Room;
@@ -95,6 +96,18 @@ public class HotelServiceImpl implements HotelService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public HotelInfoDto getHotelInfoById(Long hotelId) {
+        Hotel hotel = hotelRepository
+                .findById(hotelId)
+                .orElseThrow(()-> new ResourceNotFoundException("Hotel not found with ID: " + hotelId));
+
+        List<RoomDto> rooms = hotel.getRooms()
+                .stream()
+                .map((element)->modelMapper.map(element,RoomDto.class))
+                .toList();
+        return new HotelInfoDto(modelMapper.map(hotel,HotelDto.class),rooms);
+    }
 
 
 }

@@ -35,4 +35,11 @@ public class Payment {
      * Example: max value = 99,999,999.99
      */
     private BigDecimal amount;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    /*
+     * One booking has one payment record.
+     * LAZY = Payment details are loaded only if needed.
+     */
+    private Booking booking;
 }

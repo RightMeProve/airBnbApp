@@ -2,11 +2,11 @@ package com.rightmeprove.airbnb.airBnbApp.entity;
 
 import com.rightmeprove.airbnb.airBnbApp.entity.enums.BookingStatus; // Enum for status (CONFIRMED, CANCELLED, etc.)
 import jakarta.persistence.*;          // JPA annotations
-import lombok.Getter;                 // Lombok generates getters
-import lombok.Setter;                 // Lombok generates setters
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp; // Auto-set creation time
 import org.hibernate.annotations.UpdateTimestamp;   // Auto-update time
 
+import java.math.BigDecimal;
 import java.time.LocalDate;           // For check-in/check-out
 import java.time.LocalDateTime;       // For timestamps
 import java.util.Set;                 // For storing multiple guests
@@ -14,6 +14,9 @@ import java.util.Set;                 // For storing multiple guests
 @Entity
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Booking {
 
     @Id
@@ -67,15 +70,6 @@ public class Booking {
     // Auto-updated when booking is modified
     private LocalDateTime updatedAt;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    /*
-     * One booking has one payment record.
-     * LAZY = Payment details are loaded only if needed.
-     */
-    @JoinColumn(name = "payment_id")
-    // Foreign key to Payment table
-    private Payment payment;
-
     @Enumerated(EnumType.STRING)
     /*
      * Stores enum values (e.g., CONFIRMED, CANCELLED, PENDING) as Strings in DB.
@@ -118,4 +112,7 @@ public class Booking {
              */
     )
     private Set<Guest> guests;
+
+    @Column(nullable = false,precision = 10,scale = 2)
+    private BigDecimal amount;
 }

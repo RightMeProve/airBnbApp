@@ -69,8 +69,6 @@ public class HotelServiceImpl implements HotelService {
             roomRepository.deleteById(room.getId());
         }
         hotelRepository.deleteById(id);
-
-
     }
 
     @Override

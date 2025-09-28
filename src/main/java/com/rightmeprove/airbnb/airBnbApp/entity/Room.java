@@ -1,5 +1,6 @@
 package com.rightmeprove.airbnb.airBnbApp.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;          // JPA annotations for ORM mapping
 import lombok.Getter;                 // Lombok generates getter methods
 import lombok.Setter;                 // Lombok generates setter methods

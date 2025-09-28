@@ -1,10 +1,11 @@
 package com.rightmeprove.airbnb.airBnbApp.service;
 
 import com.rightmeprove.airbnb.airBnbApp.dto.HotelDto;
+import com.rightmeprove.airbnb.airBnbApp.dto.HotelPriceDto;
 import com.rightmeprove.airbnb.airBnbApp.dto.HotelSearchRequestDto;
-import com.rightmeprove.airbnb.airBnbApp.entity.Hotel;
 import com.rightmeprove.airbnb.airBnbApp.entity.Inventory;
 import com.rightmeprove.airbnb.airBnbApp.entity.Room;
+import com.rightmeprove.airbnb.airBnbApp.repository.HotelMinPriceRepository;
 import com.rightmeprove.airbnb.airBnbApp.repository.InventoryRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,7 @@ public class InventoryServiceImpl implements InventoryService {
 
     private final InventoryRepository inventoryRepository;
     private final ModelMapper modelMapper;
+    private final HotelMinPriceRepository hotelMinPriceRepository;
 
     @Override
     @Transactional
@@ -72,7 +74,7 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public Page<HotelDto> searchHotels(HotelSearchRequestDto hotelSearchRequestDto) {
+    public Page<HotelPriceDto> searchHotels(HotelSearchRequestDto hotelSearchRequestDto) {
         log.info("Searching hotels for {} city, from {} to {} ",
                 hotelSearchRequestDto.getCity(),
                 hotelSearchRequestDto.getStartDate(),
@@ -91,7 +93,7 @@ public class InventoryServiceImpl implements InventoryService {
         ) + 1;
 
         // Query DB for hotels with inventory available for all requested days
-        Page<Hotel> hotelPage = inventoryRepository.findHotelsWithAvailableInventory(
+        Page<HotelPriceDto> hotelPage = hotelMinPriceRepository.findHotelWithAvailableInventory(
                 hotelSearchRequestDto.getCity(),
                 hotelSearchRequestDto.getStartDate(),
                 hotelSearchRequestDto.getEndDate(),
@@ -100,7 +102,6 @@ public class InventoryServiceImpl implements InventoryService {
                 pageable
         );
 
-        // Convert each Hotel → HotelDto for API response
-        return hotelPage.map(element -> modelMapper.map(element, HotelDto.class));
+        return hotelPage;
     }
 }

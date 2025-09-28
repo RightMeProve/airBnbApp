@@ -1,5 +1,6 @@
 package com.rightmeprove.airbnb.airBnbApp.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;  // JPA annotations for entity mapping
 import lombok.Getter;        // Lombok generates getters automatically
 import lombok.Setter;        // Lombok generates setters automatically
@@ -64,6 +65,7 @@ public class Hotel {
      * If EAGER was used, all rooms would load whenever a Hotel is fetched,
      * which can cause performance issues with large datasets.
      */
+    @JsonIgnore
     private List<Room> rooms;
 
     @ManyToOne

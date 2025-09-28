@@ -13,6 +13,15 @@ A backend system that mimics the core functionality of Airbnb: managing hotels, 
 - **Inventory tracking** with surge pricing
 - **Payment integration** (Transaction ID & Status)
 - **Enum-based Role & Status management**
+- **Dynamic Pricing Engine(Strategy Pattern):**
+  - **Base Pricing**
+  - **Surge Pricing**
+  - **Occupancy-based Pricing**
+  - **Urgency-based Pricing**
+  - **Holiday Pricing**
+- **Scheduled Price Updates:**
+  - **Re-calculates inventory prices every hour**
+  - **Updates minimum hotel price (per day) for faster search**
 
 ---
 
@@ -101,8 +110,10 @@ A backend system that mimics the core functionality of Airbnb: managing hotels, 
 3. ✅ Define entities & relationships
 4. ✅ Implement repositories & services
 5. ✅ Add REST controllers & APIs
-6. ⬜ Integrate authentication & JWT
-7. ⬜ Implement business rules (surge pricing, inventory reset job)
+6. ✅ Implement dynamic pricing strategies (Strategy Pattern)
+7. ✅ Add scheduled pricing updates (hourly)
+8. ⬜ Integrate authentication & JWT
+9. ⬜ Implement business rules (inventory reset job)
 8. ⬜ Deploy locally → containerize with Docker
 
 ---

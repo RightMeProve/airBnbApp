@@ -11,31 +11,58 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+/**
+ * Controller handling user authentication (signup/login).
+ *
+ * - /auth/signup → register a new user
+ * - /auth/login → authenticate a user and return JWT tokens
+ */
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
+
     private final AuthService authService;
 
+    /**
+     * Signup endpoint
+     * @param signUpRequestDto signup payload (name, email, password)
+     * @return created user DTO
+     */
     @PostMapping("/signup")
-    public ResponseEntity<UserDto> signUp(@RequestBody SignUpRequestDto signUpRequestDto){
+    public ResponseEntity<UserDto> signUp(@RequestBody SignUpRequestDto signUpRequestDto) {
         return new ResponseEntity<>(authService.signUp(signUpRequestDto), HttpStatus.CREATED);
     }
 
+    /**
+     * Login endpoint
+     * @param loginDto login payload (email, password)
+     * @param httpServletResponse used to set HttpOnly refresh token cookie
+     * @return LoginResponseDto containing the access token
+     */
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDto> login(@RequestBody LoginDto loginDto, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse){
+    public ResponseEntity<LoginResponseDto> login(
+            @RequestBody LoginDto loginDto,
+            HttpServletResponse httpServletResponse
+    ) {
+        // [0] = Access Token, [1] = Refresh Token
         String[] tokens = authService.login(loginDto);
 
-        Cookie cookie = new Cookie("refreshToken",tokens[1]);
+        // Store refresh token in HttpOnly cookie (cannot be accessed by JS)
+        Cookie cookie = new Cookie("refreshToken", tokens[1]);
         cookie.setHttpOnly(true);
+        cookie.setPath("/"); // important: ensures cookie is sent for all requests
+        cookie.setMaxAge(60 * 60 * 24 * 30); // 30 days (matches refresh token validity)
+
+        // In production, add:
+        // cookie.setSecure(true); // only over HTTPS
+        // cookie.setSameSite("Strict"); // prevent CSRF/token leakage
 
         httpServletResponse.addCookie(cookie);
+
+        // Return access token in response body
         return ResponseEntity.ok(new LoginResponseDto(tokens[0]));
     }
-
 }

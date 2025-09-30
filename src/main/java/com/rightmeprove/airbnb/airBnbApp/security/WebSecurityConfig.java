@@ -17,31 +17,46 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class WebSecurityConfig {
+
     private final JWTAuthFilter jwtAuthFilter;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception{
+    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
+                // 🔒 Disable CSRF since we're stateless (JWT handles security)
                 .csrf(csrfConfig -> csrfConfig.disable())
-                .sessionManagement(sessionConfig -> sessionConfig.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // 📦 Make session stateless — every request must carry its JWT
+                .sessionManagement(sessionConfig ->
+                        sessionConfig.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // 🔑 Add our JWT filter before Spring Security's built-in username/password filter
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .authorizeHttpRequests(
-                        auth -> auth
-                                .requestMatchers("/admin/**").hasRole("HOTEL_MANAGER")
-                                .requestMatchers("/bookings/**").authenticated()
-                                .anyRequest().permitAll()
+
+                // 🔐 Define authorization rules
+                .authorizeHttpRequests(auth -> auth
+                        // Only Hotel Managers can access admin APIs
+                        .requestMatchers("/admin/**").hasRole("HOTEL_MANAGER")
+
+                        // Bookings require authentication (any logged-in user)
+                        .requestMatchers("/bookings/**").authenticated()
+
+                        // Everything else (login, signup, browsing hotels) is public
+                        .anyRequest().permitAll()
                 );
 
         return httpSecurity.build();
     }
 
+    // Password hashing using BCrypt (recommended)
     @Bean
-    public PasswordEncoder passwordEncoder(){
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // Needed for authentication in AuthService (login)
     @Bean
-    AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception{
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
     }
 }

@@ -14,39 +14,51 @@ import java.util.Date;
 @Service
 public class JWTService {
 
+    // 🔑 Load secret key from application.properties (jwt.secretKey)
     @Value("${jwt.secretKey}")
     private String jwtSecretKey;
 
-    private SecretKey getSecretKey(){ return Keys.hmacShaKeyFor(jwtSecretKey.getBytes(StandardCharsets.UTF_8));}
+    // Utility method: returns a SecretKey for signing/validating JWT
+    private SecretKey getSecretKey() {
+        return Keys.hmacShaKeyFor(jwtSecretKey.getBytes(StandardCharsets.UTF_8));
+    }
 
-    public String generateAccessToken(User user){
+    /**
+     * Generate a short-lived Access Token (10 minutes).
+     */
+    public String generateAccessToken(User user) {
         return Jwts.builder()
-                .subject(user.getId().toString())
-                .claim("email",user.getEmail())
-                .claim("roles",user.getRoles().toString())
+                .subject(user.getId().toString()) // userId as subject
+                .claim("email", user.getEmail())  // add email claim
+                .claim("roles", user.getRoles().toString()) // add roles claim
+                .issuedAt(new Date()) // issue time
+                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 10)) // 10 minutes
+                .signWith(getSecretKey()) // sign with secret key
+                .compact();
+    }
+
+    /**
+     * Generate a long-lived Refresh Token (30 days).
+     */
+    public String generateRefreshToken(User user) {
+        return Jwts.builder()
+                .subject(user.getId().toString()) // only store userId
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 1000*60*10))
+                .expiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 30)) // 30 days
                 .signWith(getSecretKey())
                 .compact();
     }
 
-    public String generateRefreshToken(User user){
-        return Jwts.builder()
-                .subject(user.getId().toString())
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis()+1000L*60*60*24*30))
-                .signWith(getSecretKey())
-                .compact();
-    }
-
-    public Long getUserIdFromToken(String token){
-        Claims claims = Jwts.parser()
-                .verifyWith(getSecretKey())
+    /**
+     * Parse JWT and extract userId (subject).
+     */
+    public Long getUserIdFromToken(String token) {
+        Claims claims = Jwts.parser()               // ✅ use parser for new jjwt
+                .verifyWith(getSecretKey())         // validate signature
                 .build()
-                .parseSignedClaims(token)
+                .parseSignedClaims(token)           // parse claims
                 .getPayload();
 
-        return Long.valueOf(claims.getSubject());
+        return Long.valueOf(claims.getSubject());   // subject = userId
     }
-
 }

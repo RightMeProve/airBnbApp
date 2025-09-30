@@ -6,11 +6,13 @@ import com.rightmeprove.airbnb.airBnbApp.dto.GuestDto;
 import com.rightmeprove.airbnb.airBnbApp.entity.*;
 import com.rightmeprove.airbnb.airBnbApp.entity.enums.BookingStatus;
 import com.rightmeprove.airbnb.airBnbApp.exception.ResourceNotFoundException;
+import com.rightmeprove.airbnb.airBnbApp.exception.UnAuthorisedException;
 import com.rightmeprove.airbnb.airBnbApp.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -112,6 +114,13 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(() ->
                 new ResourceNotFoundException("Booking not found with id: " + bookingId));
 
+        User user = getCurrentUser();
+
+        if(!user.equals(booking.getUser()))
+        {
+            throw new UnAuthorisedException("Booking does not belong to this user with id: "+user.getId());
+        }
+
         // Block if booking expired (older than 10 minutes)
         if (hasBookingExpired(booking)) {
             throw new IllegalStateException("Booking has already expired");
@@ -125,7 +134,7 @@ public class BookingServiceImpl implements BookingService {
         // Convert GuestDto → Guest entity, link guests to booking
         for (GuestDto guestDto : guestDtoList) {
             Guest guest = modelMapper.map(guestDto, Guest.class);
-            guest.setUser(getCurrentUser()); // TODO: replace with logged-in user
+            guest.setUser(user);
             guest = guestRespository.save(guest);
             booking.getGuests().add(guest);
         }
@@ -143,8 +152,6 @@ public class BookingServiceImpl implements BookingService {
 
     // TEMP: mock current user (replace with real authentication later)
     public User getCurrentUser() {
-        User user = new User();
-        user.setId(1L); // Dummy user
-        return user;
+       return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 }

@@ -145,6 +145,25 @@ public class BookingServiceImpl implements BookingService {
         return modelMapper.map(booking, BookingDto.class);
     }
 
+    @Override
+    public String initiatePayments(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId).orElseThrow(
+                ()-> new ResourceNotFoundException("Booking not found with id: "+bookingId)
+        );
+        User user = getCurrentUser();
+        if(!user.equals(booking.getUser()))
+        {
+            throw new UnAuthorisedException("Booking does not belong to this user with id: "+user.getId());
+        }
+
+        if(hasBookingExpired(booking))
+        {
+            throw new IllegalStateException("Booking has already expired.");
+        }
+
+        return "";
+    }
+
     // Helper: check if booking has expired (> 10 minutes since creation)
     public Boolean hasBookingExpired(Booking booking) {
         return booking.getCreatedAt().plusMinutes(10).isBefore(LocalDateTime.now());

@@ -8,8 +8,12 @@ import com.rightmeprove.airbnb.airBnbApp.entity.enums.BookingStatus;
 import com.rightmeprove.airbnb.airBnbApp.exception.ResourceNotFoundException;
 import com.rightmeprove.airbnb.airBnbApp.exception.UnAuthorisedException;
 import com.rightmeprove.airbnb.airBnbApp.repository.*;
+import com.rightmeprove.airbnb.airBnbApp.strategy.PricingService;
+import com.stripe.exception.StripeException;
 import com.stripe.model.Event;
+import com.stripe.model.Refund;
 import com.stripe.model.checkout.Session;
+import com.stripe.param.RefundCreateParams;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +47,7 @@ public class BookingServiceImpl implements BookingService {
     private final ModelMapper modelMapper;
     private final GuestRespository guestRespository;
     private final CheckoutService checkoutService;
+    private final PricingService pricingService;
 
     @Value("${frontend.url}")
     private String frontendUrl;
@@ -86,15 +91,11 @@ public class BookingServiceImpl implements BookingService {
         }
 
         // Reserve rooms → increase reservedCount for each day
-        for (Inventory inventory : inventoryList) {
-            inventory.setReservedCount(
-                    inventory.getReservedCount() + bookingRequest.getRoomsCount()
-            );
-        }
-        inventoryRepository.saveAll(inventoryList);
+        inventoryRepository.initBooking(room.getId(),bookingRequest.getCheckInDate(),bookingRequest.getCheckOutDate()
+        ,bookingRequest.getRoomsCount());
 
-        // TODO: implement dynamic pricing logic (currently dummy value)
-        BigDecimal totalPrice = (BigDecimal.TEN).multiply(BigDecimal.TEN);
+        BigDecimal priceForOneRoom = pricingService.calculateTotalPrice(inventoryList);
+        BigDecimal totalPrice = priceForOneRoom.multiply(BigDecimal.valueOf(bookingRequest.getRoomsCount()));
 
         // Create booking with RESERVED status
         Booking booking = Booking.builder()
@@ -203,6 +204,47 @@ public class BookingServiceImpl implements BookingService {
         else {
             log.warn("Unhandled event type: {}",event.getType());
         }
+    }
+
+    @Override
+    @Transactional
+    public void cancelBooking(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId).orElseThrow(
+                ()-> new ResourceNotFoundException("Booking not found with ID: "+bookingId)
+        );
+
+        User user = getCurrentUser();
+        if(!user.equals(booking.getUser()))
+        {
+            throw new UnAuthorisedException("Booking does not belong to this user with id: "+user.getId());
+        }
+
+        if(booking.getBookingStatus() != BookingStatus.CONFIRMED){
+            throw new IllegalStateException("Only confirmed bookings can be cancelled");
+        }
+
+        booking.setBookingStatus(BookingStatus.CANCELLED);
+        bookingRepository.save(booking);
+
+        inventoryRepository.findAndLockReservedInventory(booking.getRoom().getId(),booking.getCheckInDate(),
+                booking.getCheckOutDate(),booking.getRoomsCount());
+
+        inventoryRepository.cancelBooking(booking.getRoom().getId(),booking.getCheckInDate(),booking.getCheckOutDate(),
+                booking.getRoomsCount());
+
+        // handle the refund
+
+        try{
+            Session session = Session.retrieve(booking.getPaymentSessionId());
+            RefundCreateParams refundParams = RefundCreateParams.builder()
+                    .setPaymentIntent(session.getPaymentIntent())
+                    .build();
+            Refund.create(refundParams);
+
+        }catch (StripeException e){
+            throw new RuntimeException(e);
+        }
+
     }
 
     // Helper: check if booking has expired (> 10 minutes since creation)

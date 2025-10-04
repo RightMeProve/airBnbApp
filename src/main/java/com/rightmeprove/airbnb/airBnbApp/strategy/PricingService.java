@@ -4,6 +4,7 @@ import com.rightmeprove.airbnb.airBnbApp.entity.Inventory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * Service responsible for calculating dynamic room pricing.
@@ -36,4 +37,11 @@ public class PricingService {
         // Calculate final price after applying all strategies
         return pricingStrategy.calculatePrice(inventory);
     }
+
+    public BigDecimal calculateTotalPrice(List<Inventory> inventoryList){
+        return inventoryList.stream()
+                .map(this::calculateDynamicPricing)
+                .reduce(BigDecimal.ZERO,BigDecimal::add);
+    }
+
 }

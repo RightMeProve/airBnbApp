@@ -4,6 +4,6 @@ import com.rightmeprove.airbnb.airBnbApp.entity.Booking;
 
 public interface CheckoutService {
 
-    String getCheckoutService(Booking booking, String successUrl, String failureUrl);
+    String getCheckoutSession(Booking booking, String successUrl, String failureUrl);
 
 }

@@ -8,10 +8,13 @@ import com.rightmeprove.airbnb.airBnbApp.entity.enums.BookingStatus;
 import com.rightmeprove.airbnb.airBnbApp.exception.ResourceNotFoundException;
 import com.rightmeprove.airbnb.airBnbApp.exception.UnAuthorisedException;
 import com.rightmeprove.airbnb.airBnbApp.repository.*;
+import com.stripe.model.Event;
+import com.stripe.model.checkout.Session;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +42,10 @@ public class BookingServiceImpl implements BookingService {
     private final InventoryRepository inventoryRepository;
     private final ModelMapper modelMapper;
     private final GuestRespository guestRespository;
+    private final CheckoutService checkoutService;
+
+    @Value("${frontend.url}")
+    private String frontendUrl;
 
     @Override
     @Transactional // All DB operations here are atomic (rollback on failure)
@@ -87,7 +94,7 @@ public class BookingServiceImpl implements BookingService {
         inventoryRepository.saveAll(inventoryList);
 
         // TODO: implement dynamic pricing logic (currently dummy value)
-        BigDecimal totalPrice = BigDecimal.TEN;
+        BigDecimal totalPrice = (BigDecimal.TEN).multiply(BigDecimal.TEN);
 
         // Create booking with RESERVED status
         Booking booking = Booking.builder()
@@ -146,6 +153,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional
     public String initiatePayments(Long bookingId) {
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(
                 ()-> new ResourceNotFoundException("Booking not found with id: "+bookingId)
@@ -161,7 +169,40 @@ public class BookingServiceImpl implements BookingService {
             throw new IllegalStateException("Booking has already expired.");
         }
 
-        return "";
+        String sessionUrl = checkoutService.getCheckoutSession(booking,
+                frontendUrl+"/payments/success",frontendUrl+"/payments/failure");
+
+        booking.setBookingStatus(BookingStatus.PAYMENT_PENDING);
+        bookingRepository.save(booking);
+        return sessionUrl;
+    }
+
+    @Override
+    @Transactional
+    public void capturePayment(Event event) {
+        if("checkout.session.completed".equals(event.getType()))
+        {
+            Session session = (Session) event.getDataObjectDeserializer().getObject().orElse(null);
+            if(session == null) return;
+
+            String sessionId = session.getId();
+            Booking booking = bookingRepository.findByPaymentSessionId(sessionId)
+                    .orElseThrow(()-> new ResourceNotFoundException("Booking not found for session ID: "+sessionId));
+
+            booking.setBookingStatus(BookingStatus.CONFIRMED);
+            bookingRepository.save(booking);
+
+            inventoryRepository.findAndLockReservedInventory(booking.getRoom().getId(),booking.getCheckInDate(),
+                    booking.getCheckOutDate(),booking.getRoomsCount());
+
+            inventoryRepository.confirmBooking(booking.getRoom().getId(),booking.getCheckInDate(),
+                    booking.getCheckOutDate(),booking.getRoomsCount());
+
+            log.info("Successfully Confirmed the booking for booking ID: {}",booking.getId());
+        }
+        else {
+            log.warn("Unhandled event type: {}",event.getType());
+        }
     }
 
     // Helper: check if booking has expired (> 10 minutes since creation)

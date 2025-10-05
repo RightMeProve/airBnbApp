@@ -3,10 +3,15 @@ package com.rightmeprove.airbnb.airBnbApp.service;
 import com.rightmeprove.airbnb.airBnbApp.dto.HotelDto;
 import com.rightmeprove.airbnb.airBnbApp.dto.HotelPriceDto;
 import com.rightmeprove.airbnb.airBnbApp.dto.HotelSearchRequestDto;
+import com.rightmeprove.airbnb.airBnbApp.dto.InventoryDto;
 import com.rightmeprove.airbnb.airBnbApp.entity.Inventory;
 import com.rightmeprove.airbnb.airBnbApp.entity.Room;
+import com.rightmeprove.airbnb.airBnbApp.entity.User;
+import com.rightmeprove.airbnb.airBnbApp.exception.ResourceNotFoundException;
+import com.rightmeprove.airbnb.airBnbApp.exception.UnAuthorisedException;
 import com.rightmeprove.airbnb.airBnbApp.repository.HotelMinPriceRepository;
 import com.rightmeprove.airbnb.airBnbApp.repository.InventoryRepository;
+import com.rightmeprove.airbnb.airBnbApp.repository.RoomRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,11 +19,16 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static com.rightmeprove.airbnb.airBnbApp.util.AppUtils.getCurrentUser;
 
 @Service
 @RequiredArgsConstructor
@@ -42,6 +52,7 @@ public class InventoryServiceImpl implements InventoryService {
     private final InventoryRepository inventoryRepository;
     private final ModelMapper modelMapper;
     private final HotelMinPriceRepository hotelMinPriceRepository;
+    private final RoomRepository roomRepository;
 
     @Override
     @Transactional
@@ -103,5 +114,23 @@ public class InventoryServiceImpl implements InventoryService {
         );
 
         return hotelPage;
+    }
+
+    @Override
+    public List<InventoryDto> getAllInventoryByRoom(Long roomId) {
+        log.info("Getting all inventory by room for room with id: {}",roomId);
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(()->new ResourceNotFoundException("Room not found with id: "+roomId));
+
+        User user = getCurrentUser();
+        if(!user.equals(room.getHotel().getOwner()))
+        {
+            throw new AccessDeniedException("You are not the owner of the room with Id: "+roomId);
+        }
+
+        return inventoryRepository.findByRoomOrderByDate(room).stream()
+                .map((element)->modelMapper.map(element,
+                        InventoryDto.class))
+                .collect(Collectors.toList());
     }
 }

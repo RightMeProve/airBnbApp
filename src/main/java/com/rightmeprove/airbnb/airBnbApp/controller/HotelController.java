@@ -1,6 +1,8 @@
 package com.rightmeprove.airbnb.airBnbApp.controller;
 
+import com.rightmeprove.airbnb.airBnbApp.dto.BookingDto;
 import com.rightmeprove.airbnb.airBnbApp.dto.HotelDto;
+import com.rightmeprove.airbnb.airBnbApp.service.BookingService;
 import com.rightmeprove.airbnb.airBnbApp.service.HotelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +19,7 @@ import java.util.List;
 public class HotelController {
 
     private final HotelService hotelService;
+    private final BookingService bookingService;
 
     @PostMapping
     public ResponseEntity<HotelDto> createNewHotel(@RequestBody HotelDto hotelDto){
@@ -53,6 +56,12 @@ public class HotelController {
         hotelService.activateHotel(hotelId);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/{hotelId}/bookings")
+    public ResponseEntity<List<BookingDto>> getAllBookingsByHotelId(@PathVariable Long hotelId){
+        return ResponseEntity.ok(bookingService.getAllBookingsByHotelId(hotelId));
+    }
+
 
 
 }

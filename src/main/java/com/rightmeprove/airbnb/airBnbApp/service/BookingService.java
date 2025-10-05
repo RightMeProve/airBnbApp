@@ -18,4 +18,6 @@ public interface BookingService {
     void capturePayment(Event event);
 
     void cancelBooking(Long bookingId);
+
+    List<BookingDto> getAllBookingsByHotelId(Long hotelId);
 }

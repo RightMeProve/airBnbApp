@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -245,6 +247,27 @@ public class BookingServiceImpl implements BookingService {
             throw new RuntimeException(e);
         }
 
+    }
+
+    @Override
+    public List<BookingDto> getAllBookingsByHotelId(Long hotelId) {
+        Hotel hotel = hotelRepository.findById(hotelId).orElseThrow(()->new ResourceNotFoundException("Hotel is not found with" +
+                "hotel ID:  {}"+hotelId));
+
+        User user = getCurrentUser();
+
+        log.info("Getting all hotels for the hotel with ID: {}",hotelId);
+
+        if(!user.equals(hotel.getOwner()))
+        {
+            throw new AccessDeniedException("You are not the owner of this Hotel with ID: "+hotelId);
+        }
+
+        List<Booking> bookings = bookingRepository.findByHotel(hotel);
+
+        return bookings.stream()
+                .map((element)->modelMapper.map(element,BookingDto.class))
+                .collect(Collectors.toList());
     }
 
     // Helper: check if booking has expired (> 10 minutes since creation)

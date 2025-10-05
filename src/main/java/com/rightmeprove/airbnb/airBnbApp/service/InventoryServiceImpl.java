@@ -1,9 +1,6 @@
 package com.rightmeprove.airbnb.airBnbApp.service;
 
-import com.rightmeprove.airbnb.airBnbApp.dto.HotelDto;
-import com.rightmeprove.airbnb.airBnbApp.dto.HotelPriceDto;
-import com.rightmeprove.airbnb.airBnbApp.dto.HotelSearchRequestDto;
-import com.rightmeprove.airbnb.airBnbApp.dto.InventoryDto;
+import com.rightmeprove.airbnb.airBnbApp.dto.*;
 import com.rightmeprove.airbnb.airBnbApp.entity.Inventory;
 import com.rightmeprove.airbnb.airBnbApp.entity.Room;
 import com.rightmeprove.airbnb.airBnbApp.entity.User;
@@ -132,5 +129,27 @@ public class InventoryServiceImpl implements InventoryService {
                 .map((element)->modelMapper.map(element,
                         InventoryDto.class))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public void updateInventory(Long roomId, UpdateInventoryRequestDto updateInventoryRequestDto) {
+        log.info("Updating all inventory by room for room with id: {} between date range: {} - {}",roomId,
+                updateInventoryRequestDto.getStartDate(),updateInventoryRequestDto.getEndDate());
+
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(()->new ResourceNotFoundException("Room not found with id: "+roomId));
+
+        User user = getCurrentUser();
+        if(!user.equals(room.getHotel().getOwner()))
+        {
+            throw new AccessDeniedException("You are not the owner of the room with Id: "+roomId);
+        }
+
+        inventoryRepository.getInventoryAndLockBeforeUpdate(roomId,updateInventoryRequestDto.getStartDate(),
+                updateInventoryRequestDto.getEndDate());
+
+        inventoryRepository.updateInventory(roomId,updateInventoryRequestDto.getStartDate(),updateInventoryRequestDto.getEndDate(),
+                updateInventoryRequestDto.getClosed(),updateInventoryRequestDto.getSurgeFactor());
+
     }
 }

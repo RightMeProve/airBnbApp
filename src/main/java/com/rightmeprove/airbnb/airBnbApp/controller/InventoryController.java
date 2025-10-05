@@ -1,13 +1,11 @@
 package com.rightmeprove.airbnb.airBnbApp.controller;
 
 import com.rightmeprove.airbnb.airBnbApp.dto.InventoryDto;
+import com.rightmeprove.airbnb.airBnbApp.dto.UpdateInventoryRequestDto;
 import com.rightmeprove.airbnb.airBnbApp.service.InventoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -21,5 +19,13 @@ public class InventoryController {
     @GetMapping("/rooms/{roomId}")
     public ResponseEntity<List<InventoryDto>> getAllInventoryByRoom(@PathVariable Long roomId){
         return ResponseEntity.ok(inventoryService.getAllInventoryByRoom(roomId));
+    }
+
+    @PatchMapping("/rooms/{roomId}")
+    public ResponseEntity<Void> updateInventory(@PathVariable Long roomId,
+                                                @RequestBody UpdateInventoryRequestDto updateInventoryRequestDto)
+    {
+        inventoryService.updateInventory(roomId,updateInventoryRequestDto);
+        return ResponseEntity.noContent().build();
     }
 }

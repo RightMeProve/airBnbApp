@@ -310,6 +310,15 @@ public class BookingServiceImpl implements BookingService {
 
     }
 
+    @Override
+    public List<BookingDto> getMyBookings() {
+        User user = getCurrentUser();
+        return bookingRepository.findByUser(user)
+                .stream()
+                .map((element)->modelMapper.map(element,BookingDto.class))
+                .collect(Collectors.toList());
+    }
+
     // Helper: check if booking has expired (> 10 minutes since creation)
     public Boolean hasBookingExpired(Booking booking) {
         return booking.getCreatedAt().plusMinutes(10).isBefore(LocalDateTime.now());

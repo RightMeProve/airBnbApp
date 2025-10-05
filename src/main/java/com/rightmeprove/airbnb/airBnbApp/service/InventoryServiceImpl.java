@@ -132,6 +132,7 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
+    @Transactional
     public void updateInventory(Long roomId, UpdateInventoryRequestDto updateInventoryRequestDto) {
         log.info("Updating all inventory by room for room with id: {} between date range: {} - {}",roomId,
                 updateInventoryRequestDto.getStartDate(),updateInventoryRequestDto.getEndDate());

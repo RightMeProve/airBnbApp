@@ -18,7 +18,7 @@ public class UserController {
     private final UserService userService;
     private final BookingService bookingService;
 
-    @PutMapping("/profile")
+    @PatchMapping("/profile")
     public ResponseEntity<Void> updateProfile(@RequestBody ProfileUpdateRequestDto profileUpdateRequestDto){
         userService.updateProfile(profileUpdateRequestDto);
         return ResponseEntity.noContent().build();

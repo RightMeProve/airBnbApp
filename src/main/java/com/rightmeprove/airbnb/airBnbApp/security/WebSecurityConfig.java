@@ -55,6 +55,8 @@ public class WebSecurityConfig {
                         // Bookings require authentication (any logged-in user)
                         .requestMatchers("/bookings/**").authenticated()
 
+                        .requestMatchers("/users/**").authenticated()
+
                         // Everything else (login, signup, browsing hotels) is public
                         .anyRequest().permitAll()
                 )

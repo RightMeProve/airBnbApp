@@ -2,6 +2,7 @@ package com.rightmeprove.airbnb.airBnbApp.controller;
 
 import com.rightmeprove.airbnb.airBnbApp.dto.BookingDto;
 import com.rightmeprove.airbnb.airBnbApp.dto.ProfileUpdateRequestDto;
+import com.rightmeprove.airbnb.airBnbApp.dto.UserDto;
 import com.rightmeprove.airbnb.airBnbApp.service.BookingService;
 import com.rightmeprove.airbnb.airBnbApp.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -27,5 +28,10 @@ public class UserController {
     @GetMapping("/myBookings")
     public ResponseEntity<List<BookingDto>> getMyBookings(){
         return ResponseEntity.ok(bookingService.getMyBookings());
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<UserDto> getMyProfile(){
+        return ResponseEntity.ok(userService.getMyProfile());
     }
 }

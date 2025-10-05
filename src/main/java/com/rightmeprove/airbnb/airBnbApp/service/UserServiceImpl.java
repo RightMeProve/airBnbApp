@@ -1,10 +1,12 @@
 package com.rightmeprove.airbnb.airBnbApp.service;
 
 import com.rightmeprove.airbnb.airBnbApp.dto.ProfileUpdateRequestDto;
+import com.rightmeprove.airbnb.airBnbApp.dto.UserDto;
 import com.rightmeprove.airbnb.airBnbApp.entity.User;
 import com.rightmeprove.airbnb.airBnbApp.exception.ResourceNotFoundException;
 import com.rightmeprove.airbnb.airBnbApp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -15,6 +17,7 @@ import static com.rightmeprove.airbnb.airBnbApp.util.AppUtils.getCurrentUser;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserServiceImpl implements UserService, UserDetailsService {
 
     private final UserRepository userRepository;
@@ -33,6 +36,13 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         if(profileUpdateRequestDto.getGender()!=null) user.setGender(profileUpdateRequestDto.getGender());
 
         userRepository.save(user);
+    }
+
+    @Override
+    public UserDto getMyProfile() {
+        User user = getCurrentUser();
+        log.info("Getting the profile for user with id: {}",user.getId());
+        return modelMapper.map(user,UserDto.class);
     }
 
     @Override

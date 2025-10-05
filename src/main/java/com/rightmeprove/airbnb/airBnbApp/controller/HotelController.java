@@ -2,6 +2,7 @@ package com.rightmeprove.airbnb.airBnbApp.controller;
 
 import com.rightmeprove.airbnb.airBnbApp.dto.BookingDto;
 import com.rightmeprove.airbnb.airBnbApp.dto.HotelDto;
+import com.rightmeprove.airbnb.airBnbApp.dto.HotelReportDto;
 import com.rightmeprove.airbnb.airBnbApp.service.BookingService;
 import com.rightmeprove.airbnb.airBnbApp.service.HotelService;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -60,6 +62,17 @@ public class HotelController {
     @GetMapping("/{hotelId}/bookings")
     public ResponseEntity<List<BookingDto>> getAllBookingsByHotelId(@PathVariable Long hotelId){
         return ResponseEntity.ok(bookingService.getAllBookingsByHotelId(hotelId));
+    }
+
+    @GetMapping("/{hotelId}/reports")
+    public ResponseEntity<HotelReportDto> getHotelReport(@PathVariable Long hotelId,
+                                                         @RequestParam(required = false)LocalDate startDate,
+                                                         @RequestParam(required = false)LocalDate endDate){
+        if(startDate == null) startDate = LocalDate.now().minusMonths(1);
+        if(endDate == null) endDate = LocalDate.now();
+
+        return ResponseEntity.ok(bookingService.getHotelReport(hotelId,startDate,endDate));
+
     }
 
 

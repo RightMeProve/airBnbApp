@@ -3,8 +3,10 @@ package com.rightmeprove.airbnb.airBnbApp.service;
 import com.rightmeprove.airbnb.airBnbApp.dto.BookingDto;
 import com.rightmeprove.airbnb.airBnbApp.dto.BookingRequestDto;
 import com.rightmeprove.airbnb.airBnbApp.dto.GuestDto;
+import com.rightmeprove.airbnb.airBnbApp.dto.HotelReportDto;
 import com.stripe.model.Event;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface BookingService {
@@ -20,4 +22,6 @@ public interface BookingService {
     void cancelBooking(Long bookingId);
 
     List<BookingDto> getAllBookingsByHotelId(Long hotelId);
+
+    HotelReportDto getHotelReport(Long hotelId, LocalDate startDate, LocalDate endDate);
 }

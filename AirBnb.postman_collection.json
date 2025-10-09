@@ -1,0 +1,715 @@
+{
+	"info": {
+		"_postman_id": "dc4bc95b-393e-4cc0-8a7b-6f8b61ed29a1",
+		"name": "AirBnb",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "46447877",
+		"_collection_link": "https://satyam-3973404.postman.co/workspace/Satyam's-Workspace~c1a74e8e-2301-426c-84aa-e827ae884797/collection/46447877-dc4bc95b-393e-4cc0-8a7b-6f8b61ed29a1?action=share&source=collection_link&creator=46447877"
+	},
+	"item": [
+		{
+			"name": "ADMIN Hotels",
+			"item": [
+				{
+					"name": "Create Hotel",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\":\"Hotel Lotus\",\n    \"city\":\"Delhi\",\n    \"contactInfo\":{\n        \"address\":\"Central Delhi\",\n        \"email\":\"hello@lotushotels.com\",\n        \"phonenumber\":\"9876543210\",\n        \"location\":\"74.2381,28.43124\"\n    },\n    \"amenities\":[\"AC\",\"Lake View\",\"Pool Area\"],\n    \"photos\":[\"http://via.placeholder.com/50\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/v1/admin/hotels",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"hotels"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Hotel By ID",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "Update the Hotel",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\":\"Hotel Lotus\",\n    \"city\":\"Delhi\",\n    \"contactInfo\":{\n        \"address\":\"Central Delhi\",\n        \"email\":\"hello@lotushotels.com\",\n        \"phoneNumber\":\"9876543210\",\n        \"location\":\"74.2381,28.43124\"\n    },\n    \"amenities\":[\"Lake View\",\"Pool Area\",\"Garden View\"],\n    \"photos\":[\"http://via.placeholder.com/50\"],\n    \"active\":\"true\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/v1/admin/hotels/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"hotels",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete the Hotel",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\":\"Hotel Lotus\",\n    \"city\":\"Delhi\",\n    \"contactInfo\":{\n        \"address\":\"Central Delhi\",\n        \"email\":\"hello@lotushotels.com\",\n        \"phoneNumber\":\"9876543210\",\n        \"location\":\"74.2381,28.43124\"\n    },\n    \"amenities\":[\"Lake View\",\"Pool Area\",\"Garden View\"],\n    \"photos\":[\"http://via.placeholder.com/50\"],\n    \"active\":\"true\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/v1/admin/hotels/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"hotels",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all hotels",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "Activate Hotel",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\":\"Hotel Lotus\",\n    \"city\":\"Delhi\",\n    \"contactInfo\":{\n        \"address\":\"Central Delhi\",\n        \"email\":\"hello@lotushotels.com\",\n        \"phonenumber\":\"9876543210\",\n        \"location\":\"74.2381,28.43124\"\n    },\n    \"amenities\":[\"AC\",\"Lake View\",\"Pool Area\"],\n    \"photos\":[\"http://via.placeholder.com/50\"]\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/v1/admin/hotels/2",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"hotels",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Bookings",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJTYXR5YW1AZ21haWwuY29tIiwicm9sZXMiOiJbR1VFU1RdIiwiaWF0IjoxNzU5NjY0Mzk0LCJleHAiOjE3NTk2NjQ5OTR9.Cnx9Wl4J0DSPCXol_4hLYEbyEWn-oCzKYLokS8_yM96p996MhiiBwUUNe-Ldxkne3mJWlwtD05-5zSHSOg1VFA",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\":\"Hotel Lotus\",\n    \"city\":\"Delhi\",\n    \"contactInfo\":{\n        \"address\":\"Central Delhi\",\n        \"email\":\"hello@lotushotels.com\",\n        \"phonenumber\":\"9876543210\",\n        \"location\":\"74.2381,28.43124\"\n    },\n    \"amenities\":[\"AC\",\"Lake View\",\"Pool Area\"],\n    \"photos\":[\"http://via.placeholder.com/50\"]\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/v1/admin/hotels/1/bookings",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"hotels",
+								"1",
+								"bookings"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Generate Report",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "ADMIN Rooms",
+			"item": [
+				{
+					"name": "Create Room",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"type\":\"Single Room\",\n    \"basePrice\":40.00,\n    \"capacity\":2,\n    \"totalCount\":40,\n    \"amenities\":[\"Wifi\",\"Air Conditioning\",\"Mini Bar\"],\n    \n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/v1/admin/hotels/1/rooms",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"hotels",
+								"1",
+								"rooms"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Rooms in a Hotel",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/v1/admin/hotels/2/rooms",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"hotels",
+								"2",
+								"rooms"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Room By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/v1/admin/hotels/2/rooms/2",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"hotels",
+								"2",
+								"rooms",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Room By Id",
+					"request": {
+						"method": "PUT",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Booking",
+			"item": [
+				{
+					"name": "Search",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"city\":\"Delhi\",\n    \"startDate\":\"2025-09-14\",\n    \"endDate\":\"2025-09-14\",\n    \"roomsCount\":4,\n    \"page\":0,\n    \"size\":4\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/v1/hotels/search",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"hotels",
+								"search"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Hotel Details",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"city\":\"Delhi\",\n    \"startDate\":\"2025-09-14\",\n    \"endDate\":\"2025-09-14\",\n    \"roomsCount\":4,\n    \"page\":0,\n    \"size\":4\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/v1/hotels/3/info",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"hotels",
+								"3",
+								"info"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Init Booking",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"hotelId\":1,\n    \"roomId\":1,\n    \"checkInDate\":\"2025-10-02\",\n    \"checkOutDate\":\"2025-10-18\",\n    \"roomsCount\":2\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/v1/bookings/init",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"bookings",
+								"init"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Guest",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\n        \"name\":\"Ram\",\n        \"gender\":\"MALE\",\n        \"age\":20\n    },\n    {\n        \"name\":\"Shyam\"\n        \"gender\":\"MALE\",\n        \"age\":24\n    }\n]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/v1/bookings/1/addGuests",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"bookings",
+								"1",
+								"addGuests"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Init payment",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"hotelId\":1,\n    \"roomId\":1,\n    \"checkInDate\":\"2025-09-15\",\n    \"checkOutDate\":\"2025-09-18\",\n    \"roomsCount\":2\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/v1/bookings/2/payments",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"bookings",
+								"2",
+								"payments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel booking",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/v1/bookings/5/cancel",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"bookings",
+								"5",
+								"cancel"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "SignUp",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\":\"Satyam\",\n    \"email\":\"Satyam@gmail.com\",\n    \"password\":\"password\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/v1/auth/signup",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\":\"Satyam@gmail.com\",\n    \"password\":\"password\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/v1/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/v1/auth/refresh",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"refresh"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "ADMIN Inventory",
+			"item": [
+				{
+					"name": "Get Inventory By Room ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJTYXR5YW1AZ21haWwuY29tIiwicm9sZXMiOiJbSE9URUxfTUFOQUdFUiwgR1VFU1RdIiwiaWF0IjoxNzU5Njg3NTIxLCJleHAiOjE3NTk2ODgxMjF9.zCRccrQ3_unR_UbYMmSVsBkTYDTN5XLWTPWTIrFUz9cSE1-QiOByYpeULSjMe-_qGOjyOpMJVNMbA3AmeDYG_Q",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/v1/admin/inventory/rooms/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"inventory",
+								"rooms",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Inventory",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJTYXR5YW1AZ21haWwuY29tIiwicm9sZXMiOiJbR1VFU1QsIEhPVEVMX01BTkFHRVJdIiwiaWF0IjoxNzU5Njg4Mzk0LCJleHAiOjE3NTk2ODg5OTR9.UYJLSE4mU-hnOx65dzBhgOhmY5Nsr7hlAZVDqQTYZfuTH6kIW7IpSzhpHRoUQLUdiwJ9ThmqZOh2Cvo1frGRTw",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"startDate\":\"2025-11-02\",\n    \"endDate\":\"2025-11-30\",\n    \"surgeFactor\":1.5,\n    \"closed\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/v1/admin/inventory/rooms/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"inventory",
+								"rooms",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "Update My Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJTYXR5YW1AZ21haWwuY29tIiwicm9sZXMiOiJbSE9URUxfTUFOQUdFUiwgR1VFU1RdIiwiaWF0IjoxNzU5Njg4NTM0LCJleHAiOjE3NTk2ODkxMzR9.7ylFH4_GKwKsSHSWntaWnFQkI2PzvOLcjCsFkg_xD9Clvt4-ALXgAdkVJBxq9pVKh8gK37MKw-xlCg6qlPRVug",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\":\"Satyam\",\n    \"gender\":\"MALE\",\n    \"dateOfBirth\":\"2002-05-02\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/v1/users/profile",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Profile",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

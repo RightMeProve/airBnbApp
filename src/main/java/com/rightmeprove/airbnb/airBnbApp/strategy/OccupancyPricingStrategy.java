@@ -6,31 +6,53 @@ import lombok.RequiredArgsConstructor;
 import java.math.BigDecimal;
 
 /**
- * Decorator strategy that applies dynamic pricing
- * based on occupancy rate of a room.
+ * ⚡ OccupancyPricingStrategy
  *
- * - Wraps another PricingStrategy (e.g., BasePricingStrategy).
- * - If occupancy rate > 80%, increases price by 20%.
+ * A decorator strategy that adjusts room price based on occupancy rate.
+ *
+ * Pattern used:
+ * 1. Strategy Pattern – interchangeable pricing logic.
+ * 2. Decorator Pattern – wraps another PricingStrategy to add occupancy-based adjustment.
+ *
+ * Behavior:
+ * - Wraps an existing PricingStrategy (BasePricingStrategy, HolidayPricingStrategy, etc.)
+ * - Calculates occupancy rate for a specific room and date
+ * - If occupancy exceeds 80%, applies a 20% price surge
+ *
+ * Example usage:
+ *   PricingStrategy base = new BasePricingStrategy();
+ *   PricingStrategy occupancy = new OccupancyPricingStrategy(base);
+ *   BigDecimal finalPrice = occupancy.calculatePrice(inventory);
  */
 @RequiredArgsConstructor // generates constructor for final field `wrapped`
 public class OccupancyPricingStrategy implements PricingStrategy {
 
-    // Wrapped strategy → base or previously decorated strategy
+    // Wrapped pricing strategy (decorated)
     private final PricingStrategy wrapped;
 
+    /**
+     * Calculate final room price with occupancy-based surge applied.
+     *
+     * @param inventory Inventory record for the room and date
+     * @return BigDecimal final price after occupancy adjustment
+     */
     @Override
     public BigDecimal calculatePrice(Inventory inventory) {
-        // Get price from the wrapped strategy
+        // Step 1: Get base price from wrapped strategy
         BigDecimal price = wrapped.calculatePrice(inventory);
 
-        // Calculate occupancy rate = booked rooms / total rooms
-        double occupancyRate = (double) inventory.getBookedCount() / inventory.getTotalCount();
+        // Step 2: Calculate occupancy rate (booked rooms / total rooms)
+        // ⚠️ Avoid division by zero
+        double occupancyRate = inventory.getTotalCount() > 0
+                ? (double) inventory.getBookedCount() / inventory.getTotalCount()
+                : 0.0;
 
-        // If occupancy > 80%, apply 20% surge
+        // Step 3: Apply surge if occupancy > 80%
         if (occupancyRate > 0.8) {
-            price = price.multiply(BigDecimal.valueOf(1.2));
+            price = price.multiply(BigDecimal.valueOf(1.2)); // 20% increase
         }
 
+        // Step 4: Return final adjusted price
         return price;
     }
 }

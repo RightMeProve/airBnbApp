@@ -7,41 +7,52 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * Service responsible for calculating dynamic room pricing.
+ * ⚡ PricingService
  *
- * Uses the Strategy + Decorator pattern:
- * - Starts with a BasePricingStrategy.
- * - Wraps it with multiple pricing strategies (surge, occupancy, urgency, holiday).
- * - The final result is a price that reflects all rules combined.
+ * Responsible for calculating dynamic room pricing using a chain of strategies.
+ *
+ * Pattern:
+ * 1. Strategy Pattern – interchangeable pricing logic (BasePricingStrategy, SurgePricingStrategy, etc.).
+ * 2. Decorator Pattern – chains multiple strategies on top of each other.
+ *
+ * Usage:
+ * - Start with BasePricingStrategy (room base price).
+ * - Wrap with Surge, Occupancy, Urgency, Holiday strategies.
+ * - Each strategy adjusts price according to specific rules.
  */
 @Service
 public class PricingService {
 
     /**
-     * Calculate dynamic price of a room inventory by applying
-     * all pricing strategies in sequence.
+     * Calculates the final price of a single room inventory record
+     * after applying all pricing strategies in sequence.
      *
-     * @param inventory The inventory record (room availability, occupancy, surge factor).
-     * @return final dynamically calculated price
+     * @param inventory Inventory record containing room, availability, occupancy, etc.
+     * @return final price after all dynamic pricing rules
      */
     public BigDecimal calculateDynamicPricing(Inventory inventory) {
-        // Start with the base strategy (just returns room base price)
+        // Step 1: Start with base price
         PricingStrategy pricingStrategy = new BasePricingStrategy();
 
-        // Decorate the strategy with additional pricing rules
-        pricingStrategy = new SurgePricingStrategy(pricingStrategy);      // apply surge factor if present
-        pricingStrategy = new OccupancyPricingStrategy(pricingStrategy);  // increase price if >80% occupancy
-        pricingStrategy = new UrgencyPricingStrategy(pricingStrategy);    // increase price if last-minute booking
-        pricingStrategy = new HolidayPricingStrategy(pricingStrategy);    // apply holiday markup
+        // Step 2: Apply all dynamic pricing decorators in order
+        pricingStrategy = new SurgePricingStrategy(pricingStrategy);      // add surge factor if present
+        pricingStrategy = new OccupancyPricingStrategy(pricingStrategy);  // increase price if occupancy > 80%
+        pricingStrategy = new UrgencyPricingStrategy(pricingStrategy);    // increase price if last-minute
+        pricingStrategy = new HolidayPricingStrategy(pricingStrategy);    // holiday markup
 
-        // Calculate final price after applying all strategies
+        // Step 3: Calculate final price
         return pricingStrategy.calculatePrice(inventory);
     }
 
+    /**
+     * Calculates the total price for a list of inventories (e.g., multiple nights).
+     *
+     * @param inventoryList list of inventory records
+     * @return sum of dynamically calculated prices
+     */
     public BigDecimal calculateTotalPrice(List<Inventory> inventoryList){
         return inventoryList.stream()
-                .map(this::calculateDynamicPricing)
-                .reduce(BigDecimal.ZERO,BigDecimal::add);
+                .map(this::calculateDynamicPricing) // calculate dynamic price for each night
+                .reduce(BigDecimal.ZERO, BigDecimal::add); // sum all prices
     }
-
 }

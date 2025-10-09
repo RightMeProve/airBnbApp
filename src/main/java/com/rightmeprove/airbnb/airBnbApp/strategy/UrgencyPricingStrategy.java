@@ -7,28 +7,39 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
- * Decorator strategy that increases price for urgent (last-minute) bookings.
+ * ⚡ UrgencyPricingStrategy
  *
- * - Wraps another PricingStrategy (e.g., BasePricingStrategy).
+ * Decorator strategy that increases price for last-minute bookings.
+ *
+ * Rules:
+ * - Wraps another PricingStrategy (Base or any other decorator).
  * - If the booking date is within the next 7 days (including today),
  *   applies a 15% markup.
+ *
+ * Pattern:
+ * - Decorator: wraps another PricingStrategy.
+ * - Strategy: interchangeable pricing logic.
  */
-@RequiredArgsConstructor // generates constructor for final field `wrapped`
+@RequiredArgsConstructor
 public class UrgencyPricingStrategy implements PricingStrategy {
 
-    // Wrapped strategy (can be base or another decorated strategy)
+    // Wrapped strategy (can be BasePricingStrategy or another decorator)
     private final PricingStrategy wrapped;
 
+    /**
+     * Calculate final price after applying urgency markup.
+     *
+     * @param inventory Inventory record (room, date, etc.)
+     * @return dynamically calculated price
+     */
     @Override
     public BigDecimal calculatePrice(Inventory inventory) {
-        // Start with the price from the wrapped strategy
+        // Step 1: Get price from the wrapped strategy
         BigDecimal price = wrapped.calculatePrice(inventory);
 
         LocalDate today = LocalDate.now();
 
-        // Apply urgency markup if the inventory date is:
-        // - today or later (not in the past)
-        // - AND within the next 7 days
+        // Step 2: Apply 15% urgency markup if booking date is within the next 7 days
         if (!inventory.getDate().isBefore(today) && inventory.getDate().isBefore(today.plusDays(7))) {
             price = price.multiply(BigDecimal.valueOf(1.15)); // +15%
         }

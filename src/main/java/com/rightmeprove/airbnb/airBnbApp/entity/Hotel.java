@@ -1,75 +1,60 @@
 package com.rightmeprove.airbnb.airBnbApp.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;  // JPA annotations for entity mapping
-import lombok.Getter;        // Lombok generates getters automatically
-import lombok.Setter;        // Lombok generates setters automatically
-import org.hibernate.annotations.CreationTimestamp; // Auto-fill created time
-import org.hibernate.annotations.UpdateTimestamp;   // Auto-fill updated time
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDateTime; // Date-time class for timestamps
+import java.time.LocalDateTime;
 import java.util.List;
 
-// Marks this class as a JPA entity (maps to a database table)
 @Entity
-@Getter  // Lombok generates getter methods for all fields
-@Setter  // Lombok generates setter methods for all fields
-@Table(name = "hotel")  // Explicitly maps this entity to the "hotel" table in DB
+@Getter
+@Setter
+@Table(name = "hotel") // Maps entity to "hotel" table
 public class Hotel {
 
-    @Id  // Marks this field as primary key
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    // Auto-increment primary key (DB handles ID generation, usually SERIAL in Postgres/MySQL)
+    // Primary key, auto-incremented
     private Long id;
 
     @Column(nullable = false)
-    // Column cannot be NULL in DB
-    private String name;
+    private String name; // Hotel name
 
-    private String city;  // City where hotel is located
-
-    @Column(columnDefinition = "TEXT[]")
-    // Array of photo URLs, stored as Postgres TEXT[]
-    private String[] photos;
+    private String city; // Hotel city
 
     @Column(columnDefinition = "TEXT[]")
-    // Array of amenities (like WiFi, AC, Pool, etc.)
-    private String[] amenities;
+    private String[] photos; // URLs of hotel photos
+
+    @Column(columnDefinition = "TEXT[]")
+    private String[] amenities; // Amenities like WiFi, AC, Pool, etc.
 
     @CreationTimestamp
-    // Auto-filled when entity is first persisted
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt; // Auto-set when hotel record is created
 
     @UpdateTimestamp
-    // Auto-updated when entity is modified
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedAt; // Auto-updated whenever hotel record changes
 
     @Embedded
-    /*
-     * Embeds fields from HotelContactInfo directly into this table.
-     * Example: columns become "address", "phone_number", "email", "location".
-     * No separate table is created for HotelContactInfo.
-     */
+    // Embedded contact info (address, phone, email, location) stored in same table
     private HotelContactInfo contactInfo;
 
     @Column(nullable = false)
-    private Boolean active; // Whether the hotel is currently active/listed
+    private Boolean active; // Whether the hotel is listed/active
 
     @OneToMany(mappedBy = "hotel", fetch = FetchType.LAZY)
     /*
-     * One Hotel → Many Rooms.
-     * `mappedBy = "hotel"` → the "hotel" field in Room owns the relationship.
-     * This side is inverse; no join column is created here.
-     *
-     * FetchType.LAZY → Rooms are loaded only when accessed (efficient).
-     * If EAGER was used, all rooms would load whenever a Hotel is fetched,
-     * which can cause performance issues with large datasets.
+     * One hotel can have multiple rooms.
+     * Inverse side of relationship; "hotel" field in Room owns it.
+     * Lazy loading prevents loading all rooms unless accessed.
      */
-    @JsonIgnore
+    @JsonIgnore // Prevent infinite recursion during JSON serialization
     private List<Room> rooms;
 
     @ManyToOne(optional = false)
+    // Owner of the hotel (usually a HOTEL_MANAGER)
     private User owner;
-
-
 }

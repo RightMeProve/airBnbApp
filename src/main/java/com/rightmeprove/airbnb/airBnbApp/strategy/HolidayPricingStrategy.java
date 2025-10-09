@@ -6,32 +6,50 @@ import lombok.RequiredArgsConstructor;
 import java.math.BigDecimal;
 
 /**
- * Decorator strategy that applies a holiday markup on top of
- * an existing pricing strategy.
+ * ⚡ HolidayPricingStrategy
  *
- * Uses the Strategy + Decorator pattern:
- * - Wraps another PricingStrategy (e.g., BasePricingStrategy).
- * - Adds extra logic: increases price if today is a holiday.
+ * A decorator strategy that adds a holiday markup to an existing pricing strategy.
+ *
+ * Pattern used:
+ * 1. Strategy Pattern – allows interchangeable pricing logic.
+ * 2. Decorator Pattern – wraps another PricingStrategy to add extra behavior (holiday markup)
+ *
+ * Responsibilities:
+ * - Delegates initial price calculation to the wrapped strategy (could be BasePricingStrategy or SurgePricingStrategy).
+ * - Applies an additional markup if the date is a holiday.
+ *
+ * Example usage:
+ *   PricingStrategy base = new BasePricingStrategy();
+ *   PricingStrategy holiday = new HolidayPricingStrategy(base);
+ *   BigDecimal finalPrice = holiday.calculatePrice(inventory);
  */
 @RequiredArgsConstructor // generates constructor for final field `wrapped`
 public class HolidayPricingStrategy implements PricingStrategy {
 
-    // Wrapped strategy (could be BasePricingStrategy, SurgePricingStrategy, etc.)
+    // The wrapped PricingStrategy. Can be BasePricingStrategy, SurgePricingStrategy, etc.
     private final PricingStrategy wrapped;
 
+    /**
+     * Calculate the final room price, including holiday markup if applicable.
+     *
+     * @param inventory The inventory record for a specific room and date
+     * @return BigDecimal representing the final calculated price
+     */
     @Override
     public BigDecimal calculatePrice(Inventory inventory) {
-        // Get the base price (or price from wrapped strategy)
+        // Step 1: Delegate to the wrapped strategy for base price
         BigDecimal price = wrapped.calculatePrice(inventory);
 
-        // TODO: Replace with a real holiday-checking service (API or DB)
+        // Step 2: Check if today is a holiday
+        // TODO: Replace hardcoded 'true' with real holiday-checking logic (API, DB, config, etc.)
         boolean isTodayHoliday = true;
 
-        // Apply a 25% markup if today is a holiday
+        // Step 3: Apply 25% markup if it’s a holiday
         if (isTodayHoliday) {
             price = price.multiply(BigDecimal.valueOf(1.25));
         }
 
+        // Step 4: Return the final price
         return price;
     }
 }

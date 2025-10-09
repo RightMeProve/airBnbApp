@@ -11,60 +11,41 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
 import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 @Entity
 @Getter
 @Setter
-@Table(name = "app_user")
-// Renamed because "user" is a reserved keyword in Postgres
+@Table(name = "app_user") // "user" is reserved in Postgres
 public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    // Primary key, auto-incremented
-    private Long id;
+    private Long id; // Primary key, auto-incremented
 
     @Column(unique = true, nullable = false)
-    // Unique + NOT NULL → ensures no two users share same email
-    // Postgres automatically creates an index for unique columns
-    private String email;
+    private String email; // Unique email used as username
 
     @Column(nullable = false)
-    private String password; // Hashed password (never store plain text)
+    private String password; // Hashed password
 
-    private String name; // User's display name
-
+    private String name; // Display name
     private LocalDate dateOfBirth;
-
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    /*
-     * - Stores a collection of simple types (like enums, Strings, numbers) in a separate table.
-     * - Here, roles are stored in a join table automatically created by JPA.
-     *   Table name → user_roles (by default)
-     *   Columns → user_id (FK), roles (enum string)
-     *
-     * FetchType.EAGER → roles are always loaded with the User (since roles are small and essential).
-     */
     @Enumerated(EnumType.STRING)
-    /*
-     * Enum stored as String (e.g., "ADMIN", "CUSTOMER") instead of ordinal numbers.
-     * Using STRING is safer because ORDINAL would store 0, 1, 2...
-     * → which breaks if enum order changes in code.
-     */
+    // Stores user roles as strings in a separate join table
     private Set<Role> roles;
 
+    // Spring Security: map roles to authorities
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return roles.stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_"+role.name()))
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.name()))
                 .collect(Collectors.toSet());
     }
 
@@ -72,6 +53,8 @@ public class User implements UserDetails {
     public String getUsername() {
         return email;
     }
+
+    // Optional: you may implement other UserDetails methods like isAccountNonExpired etc.
 
     @Override
     public boolean equals(Object o) {

@@ -19,35 +19,35 @@ import java.util.Set;
 
 /**
  * Authentication & Authorization service.
- *
- * Handles:
- *  - User signup (registration)
- *  - User login (authentication)
- *  - JWT token generation
+ * Handles user signup, login, and JWT token generation.
  */
 @Service
-@RequiredArgsConstructor // generates constructor for all final fields
+@RequiredArgsConstructor
 public class AuthService {
 
-    // Dependencies injected by Spring
+    // Repository for User entity
     private final UserRepository userRepository;
+
+    // Maps between DTOs and entity objects
     private final ModelMapper modelMapper;
+
+    // Encodes user passwords
     private final PasswordEncoder passwordEncoder;
+
+    // Authenticates credentials via Spring Security
     private final AuthenticationManager authenticationManager;
+
+    // JWT token generator & validator
     private final JWTService jwtService;
 
     /**
-     * Register a new user.
-     * - Checks if email already exists.
-     * - Encodes password.
-     * - Assigns default role GUEST.
-     * - Persists user in database.
+     * Registers a new user
      *
-     * @param signUpRequestDto signup request (name, email, password)
-     * @return saved user mapped to DTO
+     * @param signUpRequestDto DTO containing name, email, password
+     * @return saved user as UserDto
      */
     public UserDto signUp(SignUpRequestDto signUpRequestDto) {
-        // Check if user already exists
+        // Check if user already exists in DB
         User user = userRepository.findByEmail(signUpRequestDto.getEmail()).orElse(null);
         if (user != null) {
             throw new RuntimeException("User is already present with this email ID.");
@@ -56,29 +56,27 @@ public class AuthService {
         // Map DTO → Entity
         User newUser = modelMapper.map(signUpRequestDto, User.class);
 
-        // Assign default role
+        // Assign default role GUEST
         newUser.setRoles(Set.of(Role.GUEST));
 
-        // Encrypt password
+        // Hash the password before storing
         newUser.setPassword(passwordEncoder.encode(signUpRequestDto.getPassword()));
 
-        // Save user in DB
+        // Save user to DB
         newUser = userRepository.save(newUser);
 
-        // Return as DTO
+        // Map Entity → DTO for response
         return modelMapper.map(newUser, UserDto.class);
     }
 
     /**
-     * Authenticate a user and issue JWT tokens.
-     * - Uses AuthenticationManager to validate credentials.
-     * - Generates access + refresh tokens.
+     * Authenticates a user and generates JWT tokens
      *
-     * @param loginDto login request (email, password)
-     * @return array of [accessToken, refreshToken]
+     * @param loginDto DTO containing email and password
+     * @return String array: [accessToken, refreshToken]
      */
     public String[] login(LoginDto loginDto) {
-        // Authenticate using Spring Security
+        // Authenticate credentials using Spring Security
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginDto.getEmail(),
@@ -86,26 +84,32 @@ public class AuthService {
                 )
         );
 
-        // ⚠️ Potential issue:
-        // `authentication.getPrincipal()` by default returns a UserDetails object,
-        // not your custom `User` entity.
-        // This will cause a ClassCastException unless you've integrated your User entity
-        // with Spring Security's UserDetailsService.
+        // ⚠ authentication.getPrincipal() should return your User entity
         User user = (User) authentication.getPrincipal();
 
-        // Generate JWT tokens
+        // Generate JWT access & refresh tokens
         String[] arr = new String[2];
-        arr[0] = jwtService.generateAccessToken(user);   // short-lived access token
-        arr[1] = jwtService.generateRefreshToken(user);  // long-lived refresh token
+        arr[0] = jwtService.generateAccessToken(user);   // short-lived token
+        arr[1] = jwtService.generateRefreshToken(user);  // long-lived token
 
         return arr;
     }
 
+    /**
+     * Generates a new access token from a valid refresh token
+     *
+     * @param refreshToken JWT refresh token
+     * @return new access token
+     */
+    public String refreshToken(String refreshToken) {
+        // Extract user ID from refresh token
+        Long id = jwtService.getUserIdFromToken(refreshToken);
 
-    public String refreshToken(String refreshToken){
-        Long id  = jwtService.getUserIdFromToken(refreshToken);
+        // Retrieve user from DB
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
-        User user = userRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("User not found with id: "+id));
+        // Generate new access token
         return jwtService.generateAccessToken(user);
     }
 }

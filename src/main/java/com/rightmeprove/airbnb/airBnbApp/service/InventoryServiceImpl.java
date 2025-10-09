@@ -5,7 +5,6 @@ import com.rightmeprove.airbnb.airBnbApp.entity.Inventory;
 import com.rightmeprove.airbnb.airBnbApp.entity.Room;
 import com.rightmeprove.airbnb.airBnbApp.entity.User;
 import com.rightmeprove.airbnb.airBnbApp.exception.ResourceNotFoundException;
-import com.rightmeprove.airbnb.airBnbApp.exception.UnAuthorisedException;
 import com.rightmeprove.airbnb.airBnbApp.repository.HotelMinPriceRepository;
 import com.rightmeprove.airbnb.airBnbApp.repository.InventoryRepository;
 import com.rightmeprove.airbnb.airBnbApp.repository.RoomRepository;
@@ -29,58 +28,58 @@ import static com.rightmeprove.airbnb.airBnbApp.util.AppUtils.getCurrentUser;
 
 @Service
 @RequiredArgsConstructor
-/*
- * Why @RequiredArgsConstructor?
- * - Generates a constructor with all final fields (inventoryRepository, modelMapper).
- * - Spring uses this constructor for dependency injection.
- *
- * Why not @NoArgsConstructor?
- * - That would create an empty constructor with no params.
- * - Spring cannot inject final fields with it → dependencies would remain null.
- *
- * Why not @Data?
- * - @Data = getters, setters, toString, equals, hashCode, and RequiredArgsConstructor.
- * - Services don’t need setters or equals/hashCode (unlike entities/DTOs).
- * - Cleaner to only use @RequiredArgsConstructor here.
- */
 @Slf4j
 public class InventoryServiceImpl implements InventoryService {
 
-    private final InventoryRepository inventoryRepository;
-    private final ModelMapper modelMapper;
-    private final HotelMinPriceRepository hotelMinPriceRepository;
-    private final RoomRepository roomRepository;
+    private final InventoryRepository inventoryRepository;     // CRUD & custom inventory queries
+    private final ModelMapper modelMapper;                     // Entity ↔ DTO conversion
+    private final HotelMinPriceRepository hotelMinPriceRepository; // Custom query for searching hotels
+    private final RoomRepository roomRepository;               // For verifying room existence
 
+    /**
+     * Initialize inventory for a room for 1 year.
+     * - Creates daily Inventory rows with default values.
+     * - Links each inventory to the hotel, room, and city.
+     */
     @Override
     @Transactional
     public void initializeRoomForAYear(Room room) {
         LocalDate today = LocalDate.now();
         LocalDate endDate = today.plusYears(1);
 
-        // Loop through 365+ days and create inventory records for each day
+        // Loop through all days from today to 1 year ahead
         for (; !today.isAfter(endDate); today = today.plusDays(1)) {
             Inventory inventory = Inventory.builder()
-                    .hotel(room.getHotel())               // link to hotel
+                    .hotel(room.getHotel())               // link inventory to hotel
                     .room(room)                           // link to room
-                    .city(room.getHotel().getCity())      // duplicate city for faster search
+                    .city(room.getHotel().getCity())      // store city for faster queries
                     .date(today)                          // inventory date
-                    .reservedCount(0)                     // default: no rooms reserved
+                    .reservedCount(0)                     // no rooms reserved initially
                     .price(room.getBasePrice())           // base price for the room
-                    .surgeFactor(BigDecimal.ONE)          // default = no surge
-                    .totalCount(room.getTotalCount())     // number of rooms available
-                    .closed(false)                        // default = open
+                    .surgeFactor(BigDecimal.ONE)          // no surge initially
+                    .totalCount(room.getTotalCount())     // total available rooms
+                    .closed(false)                        // room is open for booking
                     .build();
             inventoryRepository.save(inventory);
         }
     }
 
+    /**
+     * Delete all inventory rows for a room.
+     * - Used when removing a room or hotel.
+     */
     @Override
     @Transactional
     public void deleteAllInventories(Room room) {
         log.info("Deleting the inventories of room with ID: {}", room.getId());
-        inventoryRepository.deleteByRoom(room); // bulk delete
+        inventoryRepository.deleteByRoom(room); // bulk delete for efficiency
     }
 
+    /**
+     * Search hotels based on availability and requested dates.
+     * - Uses custom repository query to return hotels with sufficient inventory.
+     * - Returns a paginated result of HotelPriceDto.
+     */
     @Override
     public Page<HotelPriceDto> searchHotels(HotelSearchRequestDto hotelSearchRequestDto) {
         log.info("Searching hotels for {} city, from {} to {} ",
@@ -88,19 +87,19 @@ public class InventoryServiceImpl implements InventoryService {
                 hotelSearchRequestDto.getStartDate(),
                 hotelSearchRequestDto.getEndDate());
 
-        // Pagination (page number + size from request)
+        // Setup pagination
         Pageable pageable = PageRequest.of(
                 hotelSearchRequestDto.getPage(),
                 hotelSearchRequestDto.getSize()
         );
 
-        // Count how many days user wants to stay (inclusive)
+        // Number of days requested (inclusive)
         long dateCount = ChronoUnit.DAYS.between(
                 hotelSearchRequestDto.getStartDate(),
                 hotelSearchRequestDto.getEndDate()
         ) + 1;
 
-        // Query DB for hotels with inventory available for all requested days
+        // Query DB for hotels with enough inventory for all requested days
         Page<HotelPriceDto> hotelPage = hotelMinPriceRepository.findHotelWithAvailableInventory(
                 hotelSearchRequestDto.getCity(),
                 hotelSearchRequestDto.getStartDate(),
@@ -113,44 +112,62 @@ public class InventoryServiceImpl implements InventoryService {
         return hotelPage;
     }
 
+    /**
+     * Get all inventory for a given room.
+     * - Checks that the current user owns the hotel.
+     * - Returns inventory mapped as InventoryDto.
+     */
     @Override
     public List<InventoryDto> getAllInventoryByRoom(Long roomId) {
-        log.info("Getting all inventory by room for room with id: {}",roomId);
+        log.info("Getting all inventory by room for room with id: {}", roomId);
         Room room = roomRepository.findById(roomId)
-                .orElseThrow(()->new ResourceNotFoundException("Room not found with id: "+roomId));
+                .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + roomId));
 
+        // Ensure user owns the hotel
         User user = getCurrentUser();
-        if(!user.equals(room.getHotel().getOwner()))
-        {
-            throw new AccessDeniedException("You are not the owner of the room with Id: "+roomId);
+        if (!user.equals(room.getHotel().getOwner())) {
+            throw new AccessDeniedException("You are not the owner of the room with Id: " + roomId);
         }
 
         return inventoryRepository.findByRoomOrderByDate(room).stream()
-                .map((element)->modelMapper.map(element,
-                        InventoryDto.class))
+                .map(inventory -> modelMapper.map(inventory, InventoryDto.class))
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Update inventory for a room between two dates.
+     * - Locks inventory rows for consistency.
+     * - Updates closed status and surge factor.
+     */
     @Override
     @Transactional
     public void updateInventory(Long roomId, UpdateInventoryRequestDto updateInventoryRequestDto) {
-        log.info("Updating all inventory by room for room with id: {} between date range: {} - {}",roomId,
-                updateInventoryRequestDto.getStartDate(),updateInventoryRequestDto.getEndDate());
+        log.info("Updating all inventory by room for room with id: {} between date range: {} - {}",
+                roomId, updateInventoryRequestDto.getStartDate(), updateInventoryRequestDto.getEndDate());
 
         Room room = roomRepository.findById(roomId)
-                .orElseThrow(()->new ResourceNotFoundException("Room not found with id: "+roomId));
+                .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + roomId));
 
+        // Check ownership
         User user = getCurrentUser();
-        if(!user.equals(room.getHotel().getOwner()))
-        {
-            throw new AccessDeniedException("You are not the owner of the room with Id: "+roomId);
+        if (!user.equals(room.getHotel().getOwner())) {
+            throw new AccessDeniedException("You are not the owner of the room with Id: " + roomId);
         }
 
-        inventoryRepository.getInventoryAndLockBeforeUpdate(roomId,updateInventoryRequestDto.getStartDate(),
-                updateInventoryRequestDto.getEndDate());
+        // Lock inventory rows before updating to prevent race conditions
+        inventoryRepository.getInventoryAndLockBeforeUpdate(
+                roomId,
+                updateInventoryRequestDto.getStartDate(),
+                updateInventoryRequestDto.getEndDate()
+        );
 
-        inventoryRepository.updateInventory(roomId,updateInventoryRequestDto.getStartDate(),updateInventoryRequestDto.getEndDate(),
-                updateInventoryRequestDto.getClosed(),updateInventoryRequestDto.getSurgeFactor());
-
+        // Update inventory fields
+        inventoryRepository.updateInventory(
+                roomId,
+                updateInventoryRequestDto.getStartDate(),
+                updateInventoryRequestDto.getEndDate(),
+                updateInventoryRequestDto.getClosed(),
+                updateInventoryRequestDto.getSurgeFactor()
+        );
     }
 }

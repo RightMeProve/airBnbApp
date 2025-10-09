@@ -6,10 +6,7 @@ import com.rightmeprove.airbnb.airBnbApp.entity.Room;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -17,34 +14,21 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Repository for managing Inventory entity.
+ * Handles room availability, booking initialization, confirmation, and inventory updates.
+ */
 @Repository
 public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 
-    /**
-     * Delete all inventory records for a specific room.
-     * Useful when a room is deleted → ensures orphan inventories are cleaned up.
-     */
+    // Delete all inventory entries of a room (useful when a room is removed)
     void deleteByRoom(Room room);
 
     /**
-     * Finds hotels with available inventory that match the search criteria.
-     *
-     * - Filters by city.
-     * - Checks if inventory exists for *every single date* in the requested range.
-     * - Ensures room is not closed.
-     * - Ensures available count >= requested rooms (total - booked - reserved).
-     *
-     * GROUP BY i.hotel, i.room
-     * - Ensures availability is checked per hotel-room combination.
-     *
-     * HAVING COUNT(i.date) = :dateCount
-     * - Makes sure that *all requested days* are available.
-     *   Example: if date range = 3 nights, we must have inventory rows for all 3 dates.
-     *
-     * DISTINCT i.hotel
-     * - Ensures the same hotel is not returned multiple times.
-     *
-     * Pageable → supports pagination for search results.
+     * Search for hotels with available inventory in a city for a date range.
+     * - Ensures room availability for all dates in the range.
+     * - Filters by city, not closed, and enough available rooms.
+     * - Uses GROUP BY + HAVING COUNT to ensure all dates are available.
      */
     @Query("""
             SELECT DISTINCT i.hotel
@@ -66,20 +50,9 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
     );
 
     /**
-     * Locks inventory rows (per room + date range) so no two bookings
-     * can reserve the same rooms concurrently.
-     *
-     * @Lock(PESSIMISTIC_WRITE)
-     * - Adds a "SELECT ... FOR UPDATE" at DB level.
-     * - Ensures only one transaction can modify those rows at a time.
-     *
-     * Conditions:
-     * - Room ID must match.
-     * - Dates must fall within check-in/check-out range.
-     * - Inventory must not be closed.
-     * - Must have enough available count left.
-     *
-     * Used during booking initialization step before confirming reservations.
+     * Lock inventory rows for a room + date range to prevent concurrent bookings.
+     * - Pessimistic lock ensures only one transaction can update the rows at a time.
+     * - Checks enough available rooms and not closed.
      */
     @Query("""
             SELECT i
@@ -101,9 +74,9 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
             SELECT i
             FROM Inventory i
             WHERE i.room.id = :roomId
-                AND i.date BETWEEN :startDate AND :endDate
-                AND (i.totalCount - i.bookedCount) >= :numberOfRooms
-                AND i.closed = false
+              AND i.date BETWEEN :startDate AND :endDate
+              AND (i.totalCount - i.bookedCount) >= :numberOfRooms
+              AND i.closed = false
             """)
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<Inventory> findAndLockReservedInventory(@Param("roomId") Long roomId,
@@ -111,44 +84,47 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
                                                  @Param("endDate") LocalDate endDate,
                                                  @Param("numberOfRooms") int numberOfRooms);
 
+    // Reserve rooms during booking initialization
     @Modifying
     @Query("""
             UPDATE Inventory i
             SET i.reservedCount = i.reservedCount + :numberOfRooms
             WHERE i.room.id = :roomId
-                AND i.date BETWEEN :startDate AND :endDate
-                AND (i.totalCount - i.bookedCount - i.reservedCount) >= :numberOfRooms
-                AND i.closed = false
+              AND i.date BETWEEN :startDate AND :endDate
+              AND (i.totalCount - i.bookedCount - i.reservedCount) >= :numberOfRooms
+              AND i.closed = false
             """)
     void initBooking(@Param("roomId") Long roomId,
                      @Param("startDate")LocalDate startDate,
                      @Param("endDate") LocalDate endDate,
                      @Param("numberOfRooms") int numberOfRooms);
 
+    // Confirm booking: move rooms from reserved → booked
     @Modifying
     @Query("""
             UPDATE Inventory i
             SET i.reservedCount = i.reservedCount - :numberOfRooms,
                 i.bookedCount = i.bookedCount + :numberOfRooms
             WHERE i.room.id = :roomId
-                AND i.date BETWEEN :startDate AND :endDate
-                AND (i.totalCount - i.bookedCount) >= :numberOfRooms
-                AND i.reservedCount >= :numberOfRooms
-                AND i.closed = false
+              AND i.date BETWEEN :startDate AND :endDate
+              AND (i.totalCount - i.bookedCount) >= :numberOfRooms
+              AND i.reservedCount >= :numberOfRooms
+              AND i.closed = false
             """)
     void confirmBooking(@Param("roomId") Long roomId,
                         @Param("startDate") LocalDate startDate,
                         @Param("endDate") LocalDate endDate,
                         @Param("numberOfRooms") int numberOfRooms);
 
+    // Cancel booking: decrement booked count
     @Modifying
     @Query("""
             UPDATE Inventory i
             SET i.bookedCount = i.bookedCount - :numberOfRooms
             WHERE i.room.id = :roomId
-                AND i.date BETWEEN :startDate AND :endDate
-                AND (i.totalCount - i.bookedCount) >= :numberOfRooms
-                AND i.closed = false
+              AND i.date BETWEEN :startDate AND :endDate
+              AND (i.totalCount - i.bookedCount) >= :numberOfRooms
+              AND i.closed = false
             """)
     void cancelBooking(@Param("roomId")Long roomId,
                        @Param("startDate")LocalDate startDate,
@@ -159,30 +135,31 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 
     List<Inventory> findByRoomOrderByDate(Room room);
 
+    // Lock inventory rows before updating (for admin adjustments)
     @Query("""
             SELECT i
             FROM Inventory i
             WHERE i.room.id = :roomId
-                AND i.date BETWEEN :startDate AND :endDate
+              AND i.date BETWEEN :startDate AND :endDate
             """)
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<Inventory> getInventoryAndLockBeforeUpdate(@Param("roomId") Long roomId,
-                                         @Param("startDate") LocalDate startDate,
-                                         @Param("endDate") LocalDate endDate);
+                                                    @Param("startDate") LocalDate startDate,
+                                                    @Param("endDate") LocalDate endDate);
 
+    // Admin can update inventory availability and surge factor
     @Modifying
     @Query("""
             UPDATE Inventory i
             SET i.surgeFactor = :surgeFactor,
                 i.closed = :closed
             WHERE i.room.id = :roomId
-                AND i.date BETWEEN :startDate AND :endDate
+              AND i.date BETWEEN :startDate AND :endDate
             """)
     void updateInventory(@Param("roomId")Long roomId,
                          @Param("startDate")LocalDate startDate,
                          @Param("endDate") LocalDate endDate,
-                         @Param("closed") boolean closed,
+                         @Param("closed")boolean closed,
                          @Param("surgeFactor")BigDecimal surgeFactor);
-
 
 }

@@ -6,26 +6,37 @@ import lombok.RequiredArgsConstructor;
 import java.math.BigDecimal;
 
 /**
- * Decorator strategy that applies surge pricing
- * based on the surgeFactor stored in Inventory.
+ * ⚡ SurgePricingStrategy
+ *
+ * Decorator strategy that applies a surge multiplier on top of another pricing strategy.
  *
  * Example:
  * - Base price = 100
- * - surgeFactor = 1.5
+ * - Inventory.surgeFactor = 1.5
  * - Final price = 150
+ *
+ * Pattern:
+ * - Decorator: wraps another PricingStrategy (Base or previously decorated)
+ * - Strategy: interchangeable pricing logic
  */
-@RequiredArgsConstructor // generates constructor for the final field `wrapped`
+@RequiredArgsConstructor // generates constructor for final field `wrapped`
 public class SurgePricingStrategy implements PricingStrategy {
 
-    // Wrapped strategy → can be BasePricingStrategy or another decorated strategy
+    // Wrapped strategy → could be BasePricingStrategy or another decorator
     private final PricingStrategy wrapped;
 
+    /**
+     * Calculate final price by applying surge factor.
+     *
+     * @param inventory Inventory record containing base price and surgeFactor
+     * @return price after applying surge factor
+     */
     @Override
     public BigDecimal calculatePrice(Inventory inventory) {
-        // Start with price from wrapped strategy
+        // Step 1: Get price from wrapped strategy
         BigDecimal price = wrapped.calculatePrice(inventory);
 
-        // Apply surge multiplier (comes from Inventory.surgeFactor)
+        // Step 2: Multiply by surgeFactor (dynamic multiplier)
         return price.multiply(inventory.getSurgeFactor());
     }
 }

@@ -17,22 +17,24 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Arrays;
 
 /**
- * Controller handling user authentication (signup/login).
+ * Authentication controller that manages user registration, login, and token refresh.
  *
- * - /auth/signup → register a new user
- * - /auth/login → authenticate a user and return JWT tokens
+ * Routes:
+ *  - POST /auth/signup → create a new user account
+ *  - POST /auth/login → authenticate user & issue JWTs
+ *  - POST /auth/refresh → refresh access token using HttpOnly cookie
  */
 @RestController
 @RequestMapping("/auth")
-@RequiredArgsConstructor
+@RequiredArgsConstructor // Auto-generates constructor for final fields (injects AuthService)
 public class AuthController {
 
     private final AuthService authService;
 
     /**
-     * Signup endpoint
-     * @param signUpRequestDto signup payload (name, email, password)
-     * @return created user DTO
+     * Handles new user signup.
+     * @param signUpRequestDto user signup data
+     * @return created UserDto (without sensitive info)
      */
     @PostMapping("/signup")
     public ResponseEntity<UserDto> signUp(@RequestBody SignUpRequestDto signUpRequestDto) {
@@ -40,46 +42,51 @@ public class AuthController {
     }
 
     /**
-     * Login endpoint
-     * @param loginDto login payload (email, password)
-     * @param httpServletResponse used to set HttpOnly refresh token cookie
-     * @return LoginResponseDto containing the access token
+     * Authenticates user credentials and issues JWT tokens.
+     * - Access token returned in response body.
+     * - Refresh token stored securely in an HttpOnly cookie.
      */
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDto> login(
             @RequestBody LoginDto loginDto,
             HttpServletResponse httpServletResponse
     ) {
-        // [0] = Access Token, [1] = Refresh Token
+        // AuthService returns [0]=access token, [1]=refresh token
         String[] tokens = authService.login(loginDto);
 
-        // Store refresh token in HttpOnly cookie (cannot be accessed by JS)
+        // Securely store refresh token in HttpOnly cookie
         Cookie cookie = new Cookie("refreshToken", tokens[1]);
         cookie.setHttpOnly(true);
-        cookie.setPath("/"); // important: ensures cookie is sent for all requests
-        cookie.setMaxAge(60 * 60 * 24 * 30); // 30 days (matches refresh token validity)
+        cookie.setPath("/"); // accessible for all routes
+        cookie.setMaxAge(60 * 60 * 24 * 30); // 30 days validity
 
-        // In production, add:
-        // cookie.setSecure(true); // only over HTTPS
-        // cookie.setSameSite("Strict"); // prevent CSRF/token leakage
+        // In production, always enable the following:
+        // cookie.setSecure(true); // send only via HTTPS
+        // cookie.setSameSite("Strict"); // mitigate CSRF/token leakage
 
         httpServletResponse.addCookie(cookie);
 
-        // Return access token in response body
+        // Return access token (used for authenticated API calls)
         return ResponseEntity.ok(new LoginResponseDto(tokens[0]));
     }
 
+    /**
+     * Generates a new access token using the refresh token from cookies.
+     * @throws AuthenticationServiceException if refresh token is missing or invalid
+     */
     @PostMapping("/refresh")
-    public ResponseEntity<LoginResponseDto> refresh(HttpServletRequest request){
+    public ResponseEntity<LoginResponseDto> refresh(HttpServletRequest request) {
+        // Extract refresh token from cookies
         String refreshToken = Arrays.stream(request.getCookies())
                 .filter(cookie -> "refreshToken".equals(cookie.getName()))
                 .findFirst()
                 .map(Cookie::getValue)
-                .orElseThrow(()-> new AuthenticationServiceException("Refresh token not found inside the Cookies"));
+                .orElseThrow(() -> new AuthenticationServiceException("Refresh token not found inside the Cookies"));
 
+        // Get a new access token using AuthService
         String accessToken = authService.refreshToken(refreshToken);
+
+        // Return updated access token to client
         return ResponseEntity.ok(new LoginResponseDto(accessToken));
     }
-
-
 }
